@@ -1,6 +1,6 @@
 # import
 import numpy as np
-from utilize import plot_data
+from plot import plot_data
 from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import DataLoader
@@ -22,12 +22,15 @@ def main():
     seed = hp_parameters['seed']
     np.random.seed(seed)
     torch.manual_seed(seed)
-    # loading the data , rescale and devide to batches.
+    # if hp_parameters['mnist']:
+
+    # else:
+    # loading the data , rescale and divide to batches.
     with np.load(hp_parameters['dir'] + '\\' + hp_parameters['file_name'] ) as training_data:
         X_full_data = training_data['images']
 
     # visualizing the data - print the first 5 images and the last 5 images
-    # plot_data(X_full_data)
+    plot_data(X_full_data)
 
     X_full_data = X_full_data/ 255.0
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -68,7 +71,6 @@ def main():
         # writer.add_scalar('train loss' , train_loss/len(dataloader[0]), epoch)
         # writer.add_scalar('val loss' , val_loss/len(dataloader[1]), epoch)
         writer.add_scalars('train/val loss', {'train_loss':  train_loss/len(dataloader[0]), 'val loss': val_loss/len(dataloader[1])}, epoch)
-
         end = time.time()
         if epoch % 5 == 0:
             print(epoch)
@@ -76,6 +78,8 @@ def main():
             print('val loss', val_loss)
             print(end - start)
             print ('============')
+        if epoch == hp_parameters['num_epochs']-1:
+            plot_data(data.squeeze(1).cpu().detach().numpy(),compared_data=outputs.squeeze(1).cpu().detach().numpy())
     writer.close()
 
 
