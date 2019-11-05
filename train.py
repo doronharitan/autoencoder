@@ -15,7 +15,7 @@ from torchvision import datasets
 # setting hyper parameters (#hidden size, code size, optimizer, loss, epochs, path)
 # Should I use the arg parser?
 hp_parameters = {'dir' : r'C:\Users\Doron\Desktop\Autoencoder\train data', 'file_name' : 'rat_unaug_db_50pix.npz', 'code_size': 10, 'batch': 64,
-                 'seed' : 42 , 'val_size' : 0.2 , 'test_small_size' : 0.005, 'num_epochs' : 100 , 'lr' : 1e-3}
+                 'seed' : 42 , 'val_size' : 0.2 , 'test_small_size' : 0.005, 'num_epochs' : 300 , 'lr' : 1e-3}
 
 def main():
     # set a standard random seed for reproducible results
@@ -74,8 +74,8 @@ def main():
         end = time.time()
         if epoch % 5 == 0:
             print(epoch)
-            print('train loss', train_loss)
-            print('val loss', val_loss)
+            print('train loss', train_loss/len(dataloader[0]))
+            print('val loss', val_loss/len(dataloader[1]))
             print(end - start)
             print ('============')
         if epoch == hp_parameters['num_epochs']-1:
