@@ -8,24 +8,34 @@ class Autoencoder(torch.nn.Module):
         # the size of the input is (50,50)
         # Encoder #chnage the numbers to be changeable?
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=0),  # B output (16,48,48)
+            nn.Conv2d(1, 32, kernel_size=3, stride=1),  # B output (32,48,38)
             nn.BatchNorm2d(32),
             nn.ReLU(True),
             nn.MaxPool2d(2, stride=2),  # B output (16, 24, 24)
-            nn.Conv2d(32, 16, kernel_size=3, stride=3, padding=0),  # B output (8,8,8)
+            nn.Conv2d(32, 16, kernel_size=3, stride=1),  # B output (8,22,22)
             nn.BatchNorm2d(16),
             nn.ReLU(True),
-            nn.MaxPool2d(2, stride=2)  # B output (8,4,4)
+            nn.MaxPool2d(2, stride=2),  # B output (8,11,11)
+            nn.Conv2d(16, 8, kernel_size=3, stride=1),  # B output (8,9,9)
+            nn.BatchNorm2d(8),
+            nn.ReLU(True),
+
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(16, 16, kernel_size=3, stride=2),  # B output (8,9,9)
+            nn.ConvTranspose2d(8, 16, kernel_size=3, stride=1),  # B output (8,11,11)
             nn.ReLU(True),
             nn.BatchNorm2d(16),
-            nn.ConvTranspose2d(16, 32, kernel_size=3, stride=3, padding=1),  # B output (16,25,25)
+            nn.ConvTranspose2d(16, 32, kernel_size=2, stride=2),  # B output (16,22,22)
             nn.BatchNorm2d(32),
             nn.ReLU(True),
-            nn.ConvTranspose2d(32, 1, kernel_size=2, stride=2),  # B output (1,50,50)
+            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=1),  # B output (1,24,24)
+            nn.BatchNorm2d(32),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(32, 16, kernel_size=2, stride=2),  # B output (16,48,48)
+            nn.BatchNorm2d(16),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 1, kernel_size=3, stride=1),  # B output (16,50,50)
             # nn.ReLU(True),
             nn.Tanh()
         )
