@@ -2,13 +2,13 @@ import torch
 from torch import nn
 
 
-class Autoencoder(torch.nn.Module):
+class Autoencoder(nn.Module):  # todo how to write the name of the class correct
     def __init__(self):
         super(Autoencoder, self).__init__()
         # the size of the input is (50,50)
         # Encoder #chnage the numbers to be changeable?
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=3, stride=1),  # B output (32,48,38)
+            nn.Conv2d(1, 32, kernel_size=3, stride=1),  # B output (32,48,48)
             nn.BatchNorm2d(32),
             nn.ReLU(True),
             nn.MaxPool2d(2, stride=2),  # B output (16, 24, 24)
@@ -19,8 +19,7 @@ class Autoencoder(torch.nn.Module):
             nn.Conv2d(16, 8, kernel_size=3, stride=1),  # B output (8,9,9)
             nn.BatchNorm2d(8),
             nn.ReLU(True),
-
-        )
+        )                                           #todo - try to add FC, maybe comapre the preformance using ROC
 
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(8, 16, kernel_size=3, stride=1),  # B output (8,11,11)
@@ -37,7 +36,7 @@ class Autoencoder(torch.nn.Module):
             nn.ReLU(True),
             nn.ConvTranspose2d(16, 1, kernel_size=3, stride=1),  # B output (16,50,50)
             # nn.ReLU(True),
-            nn.Tanh()
+            nn.Tanh()               #Todo Check why to use this and not relu
         )
 
     def forward(self, x):
