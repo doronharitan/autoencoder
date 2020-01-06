@@ -22,6 +22,8 @@ import random
 import matplotlib.animation as manimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from torch import nn
+from args import parser
+
 
 color_sample_according_to_dict = {7: 'Angle of the body',
                                   10: 'distance from the center of the arena',
@@ -38,21 +40,22 @@ color_sample_according_to_dict_all = {6: 'Angle of the head', 7: 'Angle of the b
 
 
 def setting_parameters(use_folder_dir=False):
-    hp_parameters_dict = create_hp_dict()
+    args = parser.parse_args()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if use_folder_dir:
-            folder_dir = os.path.normpath(hp_parameters_dict['dir_model'] + os.sep + os.pardir)
+            folder_dir = os.path.normpath(args.checkpoint_path + os.sep + os.pardir)
     else:
-        if hp_parameters_dict['open_new_folder_status'] != 'False':
-            folder_dir = open_new_folder(hp_parameters_dict['open_new_folder_status'])
+        if args.open_new_folder != 'False':
+            folder_dir = open_new_folder(args.open_new_folder)
         else:
-            folder_dir = os.getcwd()  # run in colab r'./'
-    save_setting_info(hp_parameters_dict, device, folder_dir)
-    print('The HP parameters that were used in this run are:', hp_parameters_dict)
+            folder_dir = os.getcwd()
+    args_dict = vars(args)
+    save_setting_info(args_dict, device, folder_dir)
+    print('The HP parameters that were used in this run are:', args)
     print('The code run on:', device)
     print('The folder all of the data is saved on is:', folder_dir)
-    hp_parameters_dict['device'] = device
-    return folder_dir, hp_parameters_dict
+    args_dict['device'] = device
+    return folder_dir, args_dict
 
 
 def open_new_folder(open_folder_status):
@@ -61,10 +64,9 @@ def open_new_folder(open_folder_status):
     else:
         folder_name = 'debug'
     folder_dir = os.path.join(os.getcwd(), folder_name)
-    if not os.path.exists(folder_dir):
-        os.makedirs(folder_dir)
-        os.makedirs(os.path.join(folder_dir, 'Images'))
+    create_folder_if_needed(folder_dir)
     return folder_dir
+
 
 
 def save_setting_info(hp_parameters, device, folder_dir):
@@ -78,20 +80,20 @@ def save_setting_info(hp_parameters, device, folder_dir):
         json.dump('\n' + str(device), f)
 
 
-def load_plus_scale_images(hp_parameters_dict):
+def load_plus_scale_images(args):
     # images = np.load(os.path.join(hp_parameters_dict['train_data_dir'], hp_parameters_dict['file_name']))
-    with np.load(os.path.join(hp_parameters_dict['train_data_dir'], hp_parameters_dict['file_name'])) as training_data:
+    with np.load(os.path.join(args['train_data_dir'], args['file_name'])) as training_data:
         # images = training_data['images']
         images = training_data['arr_0']
-    # ====== data pre-processing ========
-    images = images / hp_parameters_dict['max_pix_value']
+    # ====== scale images ========
+    images = images / args['max_pixel_value']
     return images
 
 
 def loading_plus_preprocessing_data_visualization(hp_parameters_dict,
-                                                  encoder_mode='AE model'):  # todo module it and change the name of the varible - visualize_low_dim
+                                                  encoder_mode='AE model'): #todo delete this function
     images = load_plus_scale_images(hp_parameters_dict)
-    if encoder_mode == 'PCA':
+    if encoder_mode == 'PCA': # Todo remove it from dataloader we don't need it
         images = images.reshape(images.shape[0], -1)
         return images
     else:
@@ -101,22 +103,28 @@ def loading_plus_preprocessing_data_visualization(hp_parameters_dict,
         return dataloader
 
 
-def loading_plus_preprocessing_data(hp_parameters_dict,
-                                    encoder_mode='AE model'):  # todo module it and change the name of the varible - visualize_low_dim
-    images = load_plus_scale_images(hp_parameters_dict)
-    images_train, images_val = train_test_split(images, test_size=hp_parameters_dict['val_split'],
-                                                random_state=hp_parameters_dict['seed'])
+def loading_plus_preprocessing_data(args,
+                                    encoder_mode='AE model', split_to_train_val=False): #todo see if I can remove the encoder mode?
+    images = load_plus_scale_images(args)
+    if split_to_train_val:
+        images_train, images_val = train_test_split(images, test_size=args['split_size'],
+                                                random_state=args['seed'])
     if encoder_mode == 'PCA' or encoder_mode == 'UMAP':  # Todo remove it from dataloader we don't need it
         images_train = images_train.reshape(images_train.shape[0], -1)
         images_val = images_val.reshape(images_val.shape[0], -1)
         dataloader_dict = {index: images for index, images in
                            enumerate([images_train, images_val])}  # todo change the name dataloader_dicr?
     else:
-        dataloader_dict = {
-            index: DataLoader(torch.tensor(data, device=hp_parameters_dict['device']).float().unsqueeze(1),
-                              batch_size=hp_parameters_dict['batch_size'],
-                              shuffle=True)
-            for index, data in enumerate([images_train, images_val])}
+        if split_to_train_val:
+            dataloader_dict = {
+                index: DataLoader(torch.tensor(data, device=args['device']).float().unsqueeze(1),
+                                  batch_size=args['batch_size'],
+                                  shuffle=True)
+                for index, data in enumerate([images_train, images_val])}
+        else:
+            dataset = torch.tensor(images, device=args['device']).float().unsqueeze(1)
+            dataloader_dict = DataLoader(dataset, batch_size=args['batch_size_latent_space'],
+                                    shuffle=False)
     return dataloader_dict
 
 
@@ -147,46 +155,46 @@ def loading_plus_preprocessing_data_with_labels(hp_parameters_dict, mode='train'
 def save_loss_info_into_a_file(train_loss, val_loss, folder_dir, epoch, lr):
     file_name = os.path.join(folder_dir, 'loss_per_epoch.txt')
     with open(file_name, 'a+') as f:
-        f.write('{}D Epoch: Train Loss {:.6f}, Validation loss {:.6f},  lr %.8f\n'
+        f.write('{} Epoch: Train Loss {:.6f}, Validation loss {:.6f},  lr %.8f\n'
                 .format(epoch, train_loss, val_loss, lr))
 
 
-def train_model(model, train_images, optimizer, criterion, epoch, hp_parameters_dict, folder_dir,
-                dataloader_all_data=None):
+def train_model(model, dataloader_dict, optimizer, criterion, epoch, save_latent_space, folder_dir, checkpoint_latent_space_interval):
     train_loss, loss_reg = 0.0, 0.0
-    save_space_every_batches = len(train_images) // 3
-    for num_batch, local_batch in enumerate(train_images):
+    train_dataloader = dataloader_dict[0]
+    if save_latent_space:
+        save_latent_space_every_batches = len(train_dataloader) // checkpoint_latent_space_interval
+    for num_batch, local_batch in enumerate(train_dataloader):
         model.train()
-        optimizer.zero_grad()  # clear the gradients of all optimized variables
+        optimizer.zero_grad()                   # clear the gradients of all optimized variables
         loss, __ = prediction_step(model, local_batch, criterion)
         train_loss += loss.item()
-        loss.backward()  # compute the gradients
-        optimizer.step()  # update the weights with the gradients
-        if hp_parameters_dict['save_latent_space'] and num_batch % save_space_every_batches == 0:
-            get_latent_space(hp_parameters_dict, folder_dir, model=model, epoch=epoch,
-                             batch=num_batch, dataloader_all_data=dataloader_all_data)
+        loss.backward()                         # compute the gradients
+        optimizer.step()                        # update the weights with the gradients
+        if save_latent_space and num_batch % save_latent_space_every_batches == 0:
+            get_latent_space(folder_dir, model=model, epoch=epoch,
+                             batch=num_batch, dataloader_all_data=dataloader_dict['all_data'])
     return train_loss
 
 
-def test_model(model, test_images, criterion, epoch, folder_dir):
+def test_model(model, test_dataloader, criterion, epoch, save_images_path):
     val_loss = 0.0
     model.eval()
+    # ===== save output images and original images if the test mode is true ======
     if epoch == 'test':
         output_images, original_images = [], []
-    for batch_num, local_batch in enumerate(test_images):
-        loss, output = prediction_step(model, local_batch, criterion, mode='val')
+    for batch_num, local_images_batch in enumerate(test_dataloader):
+        loss, output = prediction_step(model, local_images_batch, criterion, mode='test')
         if epoch == 'test':
             output_images += [output.detach().cpu()]
-            original_images += [local_batch.detach().cpu()]
+            original_images += [local_images_batch.detach().cpu()]
         val_loss += loss.item()
     # ====== Visualize the output images ======
-    output_img_tensor = torch.cat((local_batch[:8], output[:8]))
-    save_image(output_img_tensor, os.path.join(folder_dir, '{}_epoch.png'.format(epoch)))
+    output_img_tensor = torch.cat((local_images_batch[:8], output[:8]))
+    save_image(output_img_tensor, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
     # ====== if test mode return images and output else return only loss======
     if epoch == 'test':
-        original_images = torch.cat(original_images)
-        output_images = torch.cat(output_images)
-        return val_loss, original_images, output_images
+        return val_loss, torch.cat(original_images), torch.cat(output_images)
     else:
         return val_loss
 
@@ -197,6 +205,7 @@ def prediction_step(model, dataset, criterion, labels=None, mode='train'):
             outputs = model(dataset)
     else:
         outputs = model(dataset)
+    # ====== Calculate loss =======
     if labels is None:
         loss = criterion(outputs, dataset)
     else:
@@ -284,43 +293,45 @@ def test_model_predicted_position(model, test_images, criterion, folder_dir, epo
         return val_loss
 
 
-def get_latent_space(hp_parameters_dict, folder_dir, option=None, fc2_mode=None, model=None,
-                     epoch=None, batch=None, dataloader_all_data=None):
+def get_latent_space(folder_dir, args=None, fit_umap_according_to_epoch=None, fc2_mode=None, model=None,
+                     epoch=None, batch=None, dataloader_all_data=None, get_latent_space_method='AE_model'):
     # ====== loading the data and pre-processing it =========
-    if hp_parameters_dict['get_latent_space_method'] == 'AE_model':
-        get_latent_space_ae(hp_parameters_dict, folder_dir, option, fc2_mode,
+    if get_latent_space_method == 'AE_model':
+        get_latent_space_ae(args, folder_dir, fit_umap_according_to_epoch, fc2_mode,
                             model=model, epoch=epoch, batch=batch, dataloader_all_data=dataloader_all_data)
-    elif hp_parameters_dict['get_latent_space_method'] == 'PCA':  # todo check code
-        get_latent_space_pca_visualization(hp_parameters_dict, folder_dir)
-    elif hp_parameters_dict['get_latent_space_method'] == 'PCA_decoder':  # todo check code
-        dataloader_pca = get_latent_space_pca_visualization(hp_parameters_dict,
+    elif args['get_latent_space_method'] == 'PCA':  # todo check code
+        get_latent_space_pca_visualization(args, folder_dir)
+    elif args['get_latent_space_method'] == 'PCA_decoder':  # todo check code
+        dataloader_pca = get_latent_space_pca_visualization(args,
                                                             encoder_mode='PCA_decoder')
-        get_latent_space_ae(hp_parameters_dict, latent_space_pca=dataloader_pca)  # todo 3
+        get_latent_space_ae(args, latent_space_pca=dataloader_pca)  # todo 3
 
 
-def get_latent_space_ae(hp_parameters_dict, folder_dir, option, fc2_mode, model=None, latent_space_pca=None, epoch=None,
-                        batch=None, dataloader_all_data=None):
-    if fc2_mode:
-        save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_fc2')
-    else:
-        save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_fc1')
+def get_latent_space_ae(args, folder_dir, fit_umap_according_to_epoch, fc2_mode, model=None, latent_space_pca=None,
+                        epoch=None, batch=None, dataloader_all_data=None):
+    save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_{}'. format('fc2' if fc2_mode else 'fc1'))
     create_folder_if_needed(save_latent_space_folder)
-    dataloader = set_dataloader(latent_space_pca, dataloader_all_data, hp_parameters_dict)
-    #  ====== load the relevant model and get the latent space =======
+    dataloader_all_data = set_dataloader(latent_space_pca, dataloader_all_data, args) #todo extract to a new function the pca option
+    #  ====== load the relevant model and predict the latent space =======
     if model is None:
         # sort the model saved according to checkpoints
-        model_list = natsorted([model_name for model_name in os.listdir(hp_parameters_dict['dir_model'])])
-        if option == 'first':
-            model_list = [model_list[0]]
-        elif option != 'every_epoch':
-            model_list = [model_list[-1]]
+        model_list = set_model_list(args['checkpoint_path'], fit_umap_according_to_epoch)
         for model_name in model_list:
-            run_latent_space_prediction(model_name, hp_parameters_dict['dir_model'], dataloader, latent_space_pca,
+            run_latent_space_prediction(model_name, args['checkpoint_path'], dataloader_all_data, latent_space_pca,
                                         save_latent_space_folder, fc2_mode)
     #  ====== use the forwarded model to get the latent space =======
     elif model is not None:
-        run_latent_space_prediction(None, None, dataloader, latent_space_pca,
+        run_latent_space_prediction(None, None, dataloader_all_data, latent_space_pca, #todo remove latent space pca
                                     save_latent_space_folder, fc2_mode, model=model, epoch=epoch, batch=batch)
+
+
+def set_model_list(checkpoint_path, fit_umap_according_to_epoch):
+    model_list = natsorted([model_name for model_name in os.listdir(checkpoint_path)])
+    if fit_umap_according_to_epoch == 'first':
+        model_list = [model_list[0]]
+    elif fit_umap_according_to_epoch != 'every_epoch':
+        model_list = [model_list[-1]]
+    return  model_list
 
 
 def get_latent_space_pca(hp_parameters_dict, device, folder_dir):  # todo change?
@@ -359,10 +370,10 @@ def get_latent_space_umap(hp_parameters_dict, device, folder_dir):  # todo chang
     return dataset
 
 
-def set_dataloader(latent_space_pca, dataloader_all_data, hp_parameters_dict):
+def set_dataloader(latent_space_pca, dataloader_all_data, args):
     if latent_space_pca is None:
         if dataloader_all_data is None:
-            dataloader = loading_plus_preprocessing_data_visualization(hp_parameters_dict)
+            dataloader = loading_plus_preprocessing_data(args)
         else:
             dataloader = dataloader_all_data
     else:
@@ -370,7 +381,7 @@ def set_dataloader(latent_space_pca, dataloader_all_data, hp_parameters_dict):
     return dataloader
 
 
-def run_latent_space_prediction(model_name, model_dir, dataloader_dict, latent_space_pca, save_latent_space_folder,
+def run_latent_space_prediction(model_name, model_dir, dataloader, latent_space_pca, save_latent_space_folder,
                                 fc2_mode, model=None, epoch=None, batch=None):
     if model_name != None:
         epoch = model_name.split('.pth.tar')[0].split('model_')[1]
@@ -380,22 +391,22 @@ def run_latent_space_prediction(model_name, model_dir, dataloader_dict, latent_s
         # ====== run forward pass till the latent_space ======
         # load model if needed
         if model is None:
-            model_path = os.path.join(model_dir, model_name)  # todo here
+            model_path = os.path.join(model_dir, model_name)
             model = torch.load(model_path)
         # move model to eval mode with no grads and predict the latent space
         model.eval()
         latent_space_arrays = []
         with torch.no_grad():
-            for local_batch in dataloader_dict:
-                if latent_space_pca is None:
-                    encoder_output = model.encoder(local_batch)
+            for local_images_batch in dataloader:
+                if latent_space_pca is None: #todo remove the pca option
+                    encoder_output = model.encoder(local_images_batch)
                     batch_size, num_filters, w, h = encoder_output.shape
                     fc_input = encoder_output.view(batch_size, num_filters * h * w)
                     latent_space = model.fc_1(fc_input)
                     if fc2_mode:
                         latent_space = model.fc_2(latent_space)
                 else:
-                    latent_space = local_batch
+                    latent_space = local_images_batch
                 latent_space_arrays += [latent_space.detach().cpu()]
             save_latent_space_to_file(latent_space_arrays, save_latent_space_folder, epoch, batch=batch)
 

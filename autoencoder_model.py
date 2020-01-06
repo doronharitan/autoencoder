@@ -32,7 +32,7 @@ class Autoencoder(nn.Module):  # Todo change output sizes
 
         self.decoder = nn.Sequential(
 
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=1),  # B output (8,11,11)
+                        nn.ConvTranspose2d(128, 64, kernel_size=3, stride=1),  # B output (8,11,11)
             nn.BatchNorm2d(64),
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2),  # B output (16,22,22)

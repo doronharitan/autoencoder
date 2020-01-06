@@ -21,20 +21,24 @@ parser.add_argument('--split_size', default=0.2, type=int, help='set the size of
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate (default:5e-4')
 parser.add_argument('--open_new_folder', default='True', type=str,
                     help='open a new folder for saving the run info, if false the info would be saved in the project '
-                         'dir, if debug the info would be saved in debug folder(default:True)')
+                         'dir, if debug the info would be saved in debug folder(default:True). options: "True", "False"'
+                         'or "debug"')
 parser.add_argument('--max_pixel_value', default=255.0, type=float,
                     help='max pixel value, would be used for the rescaling of the images')
 parser.add_argument('--latent_space_dim', default=16, type=int, help='The dim of the Conv FC output (default:16)')
-parser.add_argument('--checkpoint_path', default=r'D:\Autoencoder\predict body angle\model check points',
-                    type=str, help='Optional path to checkpoint model')
+parser.add_argument('--save_model_checkpoints', default=True, type=bool,
+                    help='should we save the model checkpoints during the run') #todo make sure it is used correctly
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints') #todo make sure it is used correctly
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_latent_space_interval', default=5, type=int,
+parser.add_argument('--checkpoint_path', default=r'D:\Autoencoder\predict body angle\model check points',
+                    type=str, help='Optional path to checkpoint model')
+parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
                     help='Interval between saving latent_space checkpoints') #todo make sure it is used correctly
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
 parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
+
 parser.add_argument('--dim_reduction_algo', default='UMAP', type=bool,
                     help='The algorithm that is used for the latent space dim reduction. options: UMAP, tSNE or PCA')
 parser.add_argument('--extract_latent_space', default=True, type=bool,
