@@ -7,7 +7,7 @@ PyTorch implementation of deep Convolutional AutoEncoder for denoising images.
  For decoding, I used the inverse operations. For this task, I utilized fully connected layer followed by transposed convolutional layers to decode the image to it's original space.    
 
  The network architecture:
-  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/ae_model.jpg.png"></p>
+  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/ae_model.jpg"></p>
 
 The input of the network is 50X50 gray-scale* images (in my case I trained the network on 50X50X1 images of freely behaving rats) 
 
