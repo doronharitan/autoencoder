@@ -3,12 +3,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Convolutional AutoEncoder for image noise reduction')
 parser.add_argument('--run_goal', default='', type=str,
-                    help='What is the goal of the run, would be printed in the setting file')
+                    help='train_the_network')
 parser.add_argument('--train_data_dir', default=r'C:\Users\Doron\Desktop\Autoencoder\train data',
                     type=str, help='The directory of the train/test data')
 parser.add_argument('--meta_data_file_name', default='mdata_for_mami.npy',
                     type=str, help='The name of the meta data file (located in the train data dir)')
-parser.add_argument('--file_name', default='ims_for_doron.npz', type=str,
+parser.add_argument('--file_name', default='test_raw_image.npy', type=str,
                     help='The name of the file containing the data')
 parser.add_argument('--batch_size', default=64, type=int, help='Batch size')
 parser.add_argument('--batch_size_latent_space', default=64, type=int,
@@ -31,8 +31,10 @@ parser.add_argument('--save_model_checkpoints', default=True, type=bool,
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints') #todo make sure it is used correctly
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_path', default=r'D:\Autoencoder\predict body angle\model check points',
+parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\20200106-164047\model check points',
                     type=str, help='Optional path to checkpoint model')
+parser.add_argument('--checkpoint_to_load', default='model_120_epoch.pth.tar',
+                    type=str, help='The name of the model we want to load')
 parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
                     help='Interval between saving latent_space checkpoints') #todo make sure it is used correctly
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
@@ -43,15 +45,22 @@ parser.add_argument('--dim_reduction_algo', default='UMAP', type=bool,
                     help='The algorithm that is used for the latent space dim reduction. options: UMAP, tSNE or PCA')
 parser.add_argument('--extract_latent_space', default=True, type=bool,
                     help='In the analysis should we extract the latent space?')
-parser.add_argument('--extract_latent_space_fc2', default=True, type=bool,
+parser.add_argument('--extract_latent_space_fc2', default=False, type=bool,
                     help='In the analysis should we extract the latent space of the 2nd FC layer'
                          ' (the beginning of the decoder?')
 parser.add_argument('--umap_dim_reduction_fit_according_to_specific_epoch', default='last', type=str,
                     help='according to which epoch to fit the umap? '
                          'Options: every_epoch, first, last, fit to alternative latent space, All')
-parser.add_argument('--alternative_latent_space_to_fit',
+parser.add_argument('--alternative_latent_space_to_fit_dir',
                     default=r'./SOTA - 16D, alex data, save latent space for batch/Latent_space_arrays_fc1', type=str,
                     help='What is the dir of the alternative latent space')
+parser.add_argument('--analysis_latent_space_stop_index',
+                    default='All', help='enable an early stop of'
+                                        ' latent_space analysis in a case we dont want to plot all of the '
+                                        'latent space saved')
+parser.add_argument('--save_plots_or_only_create_movie',
+                    default=False,type=bool, help='in the dim reduction analysis do we want '
+                                                  'to save each plot or do we want to create only the video?')
 
 # def create_hp_dict():  # todo seprate it to which area in the code it is used
     # RUN_GOAL = 'predict body angle, the same architecture of the ae encoder (conv and fc1) with fc2 that converge to two points'  #

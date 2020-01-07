@@ -11,7 +11,7 @@ PyTorch implementation of deep Convolutional AutoEncoder for denoising images.
 
 The input of the network is 50X50 gray-scale* images (in my case I trained the network on 50X50X1 images of freely behaving rats) 
 
-*default settings can be change by setting other params in the AE network.
+*default settings, can be change by setting params in the AE network.
 
 ## Installation
 This implementation uses Python 3.7.4 and PyTorch.
@@ -36,5 +36,7 @@ python train.py   --train_data_dir dir_where_trained_data_is_saved
 ```
 
 
- 
+ #######explain about the fc2 option
+ ######add what is the requirment of the the trainning data format 
+ ######add what is the requirments of the metadata format
    
