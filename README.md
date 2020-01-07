@@ -34,9 +34,17 @@ conda activate autoencoder_env
 ```
 python train.py   --train_data_dir dir_where_trained_data_is_saved    
 ```
-
-
- #######explain about the fc2 option
  ######add what is the requirment of the the trainning data format 
+
+### test:
+explain how to run it 
+What we wanted to achive 
+what we chose to look on and why, 
+what was the results.
+what question it rises - regarding how the code changes with time
+add analysis woth diffrent colors 
+and than add body prediction
+add transfer and etc
+ #######explain about the fc2 option
  ######add what is the requirments of the metadata format
    
