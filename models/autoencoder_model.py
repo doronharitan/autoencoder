@@ -47,7 +47,7 @@ class Autoencoder(nn.Module):  # Todo change output sizes
             nn.ConvTranspose2d(64, 1, kernel_size=3, stride=1),  # B output (16,50,50)
         )
 
-    def forward(self, x):  #todo make it prettier
+    def forward(self, x):
         encoder_output = self.encoder(x)
         batch_size, num_filters, w, h = encoder_output.shape
         fc_input = encoder_output.view(batch_size, num_filters * h * w)
@@ -57,9 +57,16 @@ class Autoencoder(nn.Module):  # Todo change output sizes
         decoder_output = self.decoder(decoder_input)
         return decoder_output
 
-    def forward_pca_umap(self, x):
-        batch_size = x.shape[0]
-        fc_2_output = self.fc_2(x)
-        decoder_input = fc_2_output.view(batch_size, 128, 9, 9)
-        decoder_output = self.decoder(decoder_input)
-        return decoder_output
+    def forward_latent_space(self, x, fc2_mode):
+        encoder_output = self.encoder(x)
+        batch_size, num_filters, w, h = encoder_output.shape
+        fc_input = encoder_output.view(batch_size, num_filters * h * w)
+        fc_1_output = self.fc_1(fc_input)
+        if fc2_mode:
+            fc_2_output = self.fc_2(fc_1_output)
+            return fc_2_output
+        else:
+            return fc_1_output
+
+
+

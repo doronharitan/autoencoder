@@ -41,10 +41,14 @@ explain how to run it
 What we wanted to achive 
 what we chose to look on and why, 
 what was the results.
-what question it rises - regarding how the code changes with time
 add analysis woth diffrent colors 
+
+what question it rises - 
+1. regarding how the code changes with time, how it learns to map the featuers
+2. regarding what happens if I will extract the feature using dim reduction teqnicques like umap and pca instead of the encoder will the network learn?
+3. what happen if I will change the task will the new network learn the same map? 
 and than add body prediction
 add transfer and etc
  #######explain about the fc2 option
- ######add what is the requirments of the metadata format
+ ######add what is the requirments of the metadata format. what is the datapoints labels that I have
    

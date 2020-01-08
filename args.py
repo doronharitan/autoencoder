@@ -8,11 +8,11 @@ parser.add_argument('--train_data_dir', default=r'C:\Users\Doron\Desktop\Autoenc
                     type=str, help='The directory of the train/test data')
 parser.add_argument('--meta_data_file_name', default='mdata_for_mami.npy',
                     type=str, help='The name of the meta data file (located in the train data dir)')
-parser.add_argument('--file_name', default='test_raw_image.npy', type=str,
+parser.add_argument('--file_name', default='ims_for_doron.npz', type=str,
                     help='The name of the file containing the data')
-parser.add_argument('--batch_size', default=64, type=int, help='Batch size')
-parser.add_argument('--batch_size_latent_space', default=64, type=int,
-                    help='Batch size for the analysis og the latent space')
+parser.add_argument('--batch_size', default=16, type=int, help='Batch size')
+parser.add_argument('--batch_size_latent_space', default=128, type=int,
+                    help='Batch size for the analysis of the latent space')
 parser.add_argument('--seed', default=42, type=int,
                     help='initializes the pseudorandom number generator on the same number (default:42)')
 parser.add_argument('--epochs', default=150, type=int, help='number of total epochs')
@@ -31,21 +31,23 @@ parser.add_argument('--save_model_checkpoints', default=True, type=bool,
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints') #todo make sure it is used correctly
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\20200106-164047\model check points',
+parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\PCA_16D\model check points',
                     type=str, help='Optional path to checkpoint model')
-parser.add_argument('--checkpoint_to_load', default='model_120_epoch.pth.tar',
+parser.add_argument('--checkpoint_to_load', default='model_149_epoch.pth.tar',
                     type=str, help='The name of the model we want to load')
 parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
                     help='Interval between saving latent_space checkpoints') #todo make sure it is used correctly
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
 parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
-
-parser.add_argument('--dim_reduction_algo', default='UMAP', type=bool,
-                    help='The algorithm that is used for the latent space dim reduction. options: UMAP, tSNE or PCA')
+parser.add_argument('--pca_umap_dim_reduction', default=16, type=int,
+                    help='To what dim the PCA should reduce the data dim')
+parser.add_argument('--dim_reduction_algo', default='UMAP', type=str,
+                    help='The algorithm that is used for the latent space dim reduction in the '
+                         'train_encoder_pca_umap.py script. options: UMAP or PCA')
 parser.add_argument('--extract_latent_space', default=True, type=bool,
                     help='In the analysis should we extract the latent space?')
-parser.add_argument('--extract_latent_space_fc2', default=False, type=bool,
+parser.add_argument('--extract_latent_space_fc2', default=True, type=bool,
                     help='In the analysis should we extract the latent space of the 2nd FC layer'
                          ' (the beginning of the decoder?')
 parser.add_argument('--umap_dim_reduction_fit_according_to_specific_epoch', default='last', type=str,

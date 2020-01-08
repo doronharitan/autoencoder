@@ -1,16 +1,15 @@
-from utils_local import setting_parameters
-from utils_local import get_latent_space, get_visualize_latent_space_dim_reduction
+from utils_local import setting_parameters, get_visualize_latent_space_dim_reduction
 
 def main():
     # ====== setting the HP param dict =======
-    folder_dir, hp_parameters_dict = setting_parameters(use_folder_dir=True)  # todo mofule the code
+    folder_dir, args = setting_parameters(use_folder_dir=True)
     # ====== creating and saving the last latent space, from test mode model =======
-    if hp_parameters_dict['run_all_umap_dim_reduction_options']:
-        for option in ['last', 'first', 'every_epoch']:
-            get_visualize_latent_space_dim_reduction(hp_parameters_dict, folder_dir, option)
+    if args['umap_dim_reduction_fit_according_to_specific_epoch'] == 'All':
+        for fit_umap_according_to_epoch in ['last', 'first', 'every_epoch']:
+            get_visualize_latent_space_dim_reduction(args, folder_dir, fit_umap_according_to_epoch)
     else:
-        get_visualize_latent_space_dim_reduction(hp_parameters_dict, folder_dir,
-                 hp_parameters_dict['umap_dim_reduction_fit_according_to_specific_epoch'])
+        get_visualize_latent_space_dim_reduction(args, folder_dir,
+                 args['umap_dim_reduction_fit_according_to_specific_epoch'])
 
 
 

@@ -24,24 +24,29 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from torch import nn
 from args import parser
 from models.autoencoder_model import Autoencoder
+from models.pca_umap_decoder_model import DimReductionDecoder
 
 color_datapoints_according_to_specific_condition_dict = {7: 'Angle of the body',
                                   10: 'distance from the center of the arena',
                                   11: 'polar representation of rat location'}
 
-color_datapoints_according_to_specific_condition_dict = {6: 'Angle of the head', 7: 'Angle of the body',
-                                      10: 'distance from the center of the arena',
-                                      11: 'polar representation of rat location',
-                                      12: 'Did the rat inserted noise into port'}
+# color_datapoints_according_to_specific_all_condition_dict = {6: 'Angle of the head', 7: 'Angle of the body',
+#                                       10: 'distance from the center of the arena',
+#                                       11: 'polar representation of rat location',
+#                                       12: 'Did the rat inserted noise into port'}
 
 
+specific_images_to_plot = [154, 85, 226]
 
 def setting_parameters(use_folder_dir=False, mode=None):
     args = parser.parse_args()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if use_folder_dir:
-        folder_dir = os.path.join(os.path.normpath(args.checkpoint_path + os.sep + os.pardir), mode)
-        create_folder_if_needed(folder_dir)
+        if mode is None:
+            folder_dir = os.path.normpath(args.checkpoint_path + os.sep + os.pardir)
+        else:
+            folder_dir = os.path.join(os.path.normpath(args.checkpoint_path + os.sep + os.pardir), mode)
+            create_folder_if_needed(folder_dir)
     else:
         if args.open_new_folder != 'False':
             folder_dir = open_new_folder(args.open_new_folder)
@@ -124,7 +129,7 @@ def train_model(model, dataloader_dict, optimizer, criterion, epoch, save_latent
         loss.backward()                         # compute the gradients
         optimizer.step()                        # update the weights with the gradients
         if save_latent_space and num_batch % save_latent_space_every_batches == 0:
-            get_latent_space_ae(None, folder_dir, model=model, epoch=epoch,
+            get_latent_space(None, folder_dir, model=model, epoch=epoch,
                              batch=num_batch, dataloader_all_data=dataloader_dict['all_data'])
     return train_loss
 
@@ -142,13 +147,20 @@ def test_model(model, test_dataloader, criterion, epoch, save_images_path):
             original_images += [local_images_batch.detach().cpu()]
         val_loss += loss.item()
     # ====== Visualize the output images ======
-    output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
-    save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
+    if criterion is None:
+        pass
+    else:
+        visualize_output_images(local_images_batch, output, save_images_path, epoch)
     # ====== if test mode return images and output else return only loss======
     if epoch == 'test':
         return val_loss, torch.cat(original_images), torch.cat(output_images)
     else:
         return val_loss
+
+
+def visualize_output_images(local_images_batch, output, save_images_path, epoch):
+    output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
+    save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
 
 
 def prediction_step(model, dataset, criterion, labels=None, mode='train'):
@@ -158,33 +170,79 @@ def prediction_step(model, dataset, criterion, labels=None, mode='train'):
     else:
         outputs = model(dataset)
     # ====== Calculate loss =======
-    if labels is None:
+    if criterion is None:
+        loss = torch.tensor(0)
+    elif labels is None:
         loss = criterion(outputs, dataset)
     else:
         loss = criterion(outputs, labels)
     return loss, outputs.detach()
 
 
-def get_latent_space_ae(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mode=False, model=None,
+def train_model_with_labels(model, dataloader_dict, optimizer, criterion, epoch, save_latent_space, folder_dir,
+                            checkpoint_latent_space_interval):
+    train_loss, loss_reg = 0.0, 0.0
+    train_dataloader = dataloader_dict[0]
+    if save_latent_space:
+        save_latent_space_every_batches = len(train_dataloader) // checkpoint_latent_space_interval
+    for num_batch, (local_images_batch, local_labels_batch) in enumerate(train_dataloader):
+        model.train()
+        optimizer.zero_grad()                   # clear the gradients of all optimized variables
+        loss, __ = prediction_step(model, local_images_batch, criterion, labels=local_labels_batch)
+        train_loss += loss.item()
+        loss.backward()                         # compute the gradients
+        optimizer.step()                        # update the weights with the gradients
+        if save_latent_space and num_batch % save_latent_space_every_batches == 0:
+            get_latent_space(None, folder_dir, model=model, epoch=epoch,
+                             batch=num_batch, dataloader_all_data=dataloader_dict['all_data'])
+    return train_loss
+
+
+def test_model_with_labels(model, test_dataloader, criterion, epoch, save_images_path):
+    val_loss = 0.0
+    model.eval()
+    # ===== save output images and original images if the test mode is true ======
+    for batch_num, (local_images_batch, local_labels_batch) in enumerate(test_dataloader):
+        loss, output = prediction_step(model, local_images_batch, criterion, labels=local_labels_batch ,mode='test')
+        val_loss += loss.item()
+    # ====== Visualize the output images ======
+    if local_images_batch.shape[1] > 1:
+        output_img_tensor_to_plot = torch.cat((local_labels_batch[:8], output[:8]))
+    else:
+        output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
+    save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
+    return val_loss
+
+
+def get_latent_space(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mode=False, model=None,
                         epoch='test', batch=None, dataloader_all_data=None):
     save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_{}'. format('fc2' if fc2_mode else 'fc1'))
     create_folder_if_needed(save_latent_space_folder)
-    dataloader_all_data = set_dataloader(dataloader_all_data, args)  # todo extract to a new function the pca option
+    dataloader_all_data = set_dataloader(dataloader_all_data, args, folder_dir)  # todo extract to a new function the pca option
     #  ====== load the relevant model and predict the latent space =======
     if model is None:
         # sort the model saved according to checkpoints
         model_list = set_model_list(args['checkpoint_path'], fit_umap_according_to_epoch)
         for model_name in model_list:
-            extract_latent_space_prediction(model_name, args['checkpoint_path'], dataloader_all_data,
-                                        save_latent_space_folder, fc2_mode, epoch, batch)
+            model = load_model(model_name, args)
+            if args['dim_reduction_algo'] == 'PCA' and fc2_mode == False:
+                epoch = 'PCA'
+            else:
+                epoch = model_name.split('.pth.tar')[0].split('model_')[1]
+            extract_latent_space_prediction(dataloader_all_data,
+                                        save_latent_space_folder, fc2_mode, epoch, batch, model)
     #  ====== use the forwarded model to get the latent space =======
     elif model is not None:
-        extract_latent_space_prediction(None, None, dataloader_all_data,
-                                    save_latent_space_folder, fc2_mode, epoch, batch, model=model)
+        extract_latent_space_prediction(dataloader_all_data,
+                                    save_latent_space_folder, fc2_mode, epoch, batch, model)
 
 
-def set_dataloader(dataloader_all_data, args):
-    if dataloader_all_data is None:
+def set_dataloader(dataloader_all_data, args, folder_dir):
+    if args['dim_reduction_algo'] == 'PCA':
+        dataset = load_npz_file(os.path.join(folder_dir, 'Latent_space_arrays_fc1'), 'latent_space_PCA.npz', mode='transform')
+        dataloader = DataLoader(torch.tensor(dataset).to(args['device']),
+                                batch_size=args['batch_size_latent_space'], shuffle=False)
+    elif dataloader_all_data is None:
         dataloader = loading_plus_preprocessing_data(args)
     else:
         dataloader = dataloader_all_data
@@ -200,30 +258,32 @@ def set_model_list(checkpoint_path, fit_umap_according_to_epoch):
     return model_list
 
 
-def extract_latent_space_prediction(model_name, model_dir, dataloader, save_latent_space_folder,
-                                fc2_mode, epoch, batch, model=None):
-    if model_name != None:
-        epoch = model_name.split('.pth.tar')[0].split('model_')[1]
+def load_model(model_name, args):
+    # ==== set the model according latnet space encoder options - 'PCA', 'UMAP' or 'AE encoder'========
+    checkpoint = torch.load(os.path.join(args['checkpoint_path'], model_name))
+    # if checkpoint['model_name'] != 'Autoencoder':
+    if args['dim_reduction_algo'] == 'PCA':
+        model = DimReductionDecoder(args['pca_umap_dim_reduction']).to(args['device'])
+    else:
+        model = Autoencoder(args['latent_space_dim']).to(args['device'])
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
+    return model
+
+
+def extract_latent_space_prediction(dataloader, save_latent_space_folder,
+                                fc2_mode, epoch, batch, model):
     # ====== check if the latent space file exists else create them =======
     if os.path.exists(os.path.join(save_latent_space_folder, 'latent_space_{}.npz'.format(epoch))):
         pass
     else:
         # ====== run forward pass till the latent_space ======
-        # ====== load model if needed ======
-        if model is None:
-            model_path = os.path.join(model_dir, model_name)
-            model = torch.load(model_path)
         # ====== move model to eval mode with no grads and predict the latent space ======
         model.eval()
         latent_space_arrays = []
         with torch.no_grad():
             for local_images_batch in dataloader:
-                encoder_output = model.encoder(local_images_batch)
-                batch_size, num_filters, w, h = encoder_output.shape
-                fc_input = encoder_output.view(batch_size, num_filters * h * w)
-                latent_space = model.fc_1(fc_input)
-                if fc2_mode:
-                    latent_space = model.fc_2(latent_space)
+                latent_space = model.forward_latent_space(local_images_batch, fc2_mode)
                 latent_space_arrays += [latent_space.detach().cpu()]
             save_latent_space_to_file(latent_space_arrays, save_latent_space_folder, epoch, batch=batch)
 
@@ -286,7 +346,7 @@ def get_visualize_latent_space_dim_reduction(args, folder_dir, fit_umap_accordin
         elif fc_mode:
             fc_2_mode_to_pass = False if which_fc == 'fc1' else True
             # ====== if the latent space file exists the code will not create a new one, saves time =======
-            get_latent_space_ae(args, folder_dir, fit_umap_according_to_epoch=fit_umap_according_to_epoch,
+            get_latent_space(args, folder_dir, fit_umap_according_to_epoch=fit_umap_according_to_epoch,
                              fc2_mode=fc_2_mode_to_pass, model=model)
             # ====== set the path from where we should read the latent space files =======
             latent_space_dir = os.path.join(folder_dir, 'Latent_space_arrays_{}'.format(which_fc))
@@ -349,13 +409,14 @@ def visualize_umap_embeddings(args, folder_dir, which_fc,
     save_plots_folder_dir = os.path.join(folder_dir, 'UMAP Plots {}'.format(which_fc))
     if args['save_plots_or_only_create_movie']:
         create_folder_if_needed(save_plots_folder_dir)
-    save_video_path = os.path.join(folder_dir, 'Videos')
+    save_video_path = os.path.join(folder_dir, 'Videos {}'.format(which_fc))
     create_folder_if_needed(save_video_path)
     images_to_plot_dim_reduction = extract_dim_reduction_images_to_plot(umap_embedding)
     if images_for_plot is None:
-        images_to_plot = extract_images_to_plot(save_video_path, args)
+        images_to_plot = extract_images_to_plot(save_video_path, args, folder_dir)
     else:
-        images_to_plot = np.stack([images_for_plot[226], images_for_plot[85], images_for_plot[154]])
+        images_to_plot = np.stack([images_for_plot[specific_images_to_plot[0]],
+                                   images_for_plot[specific_images_to_plot[1]], images_for_plot[specific_images_to_plot[2]]])
     axis_limits = calculate_max_min_axis(umap_embedding) #set that it would work for 3d as well
     dots_to_plot_line = extract_dots_for_line(images_to_plot_dim_reduction, axis_limits)
     for index, color_type in color_datapoints_according_to_specific_condition_dict.items():
@@ -396,8 +457,9 @@ def plot_umap_embedding(axis_limits, dim_reduction_results, color_array, cmap, d
     # ======= translate the color_array so we can color the circle representing each image in the correct color =======
     cNorm = colors.Normalize(vmin=0, vmax=color_array.max())
     scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cmap)
-    color_circle = [scalarMap.to_rgba(color_array[226]), scalarMap.to_rgba(color_array[85]),
-                    scalarMap.to_rgba(color_array[154])]
+    color_circle = [scalarMap.to_rgba(color_array[specific_images_to_plot[0]]),
+                    scalarMap.to_rgba(color_array[specific_images_to_plot[1]]),
+                    scalarMap.to_rgba(color_array[specific_images_to_plot[2]])]
     # ====== plot each circle above and each image, will be done only once=======
     for i in range(3):
         h_ax = set_axis(h_fig, 'rat_image_{}'.format(i + 1))
@@ -436,7 +498,7 @@ def plot_umap_embedding(axis_limits, dim_reduction_results, color_array, cmap, d
                     h_im_2.set_offsets(images_to_plot_dim_reduction[i])
                     writer.grab_frame()
                     pbar.update(1)
-                    if save_plots:
+                    if save_plots or (n_frames - 1 == i):
                         plt.savefig(os.path.join(save_plots_path, save_video_path.split('.')[0] + '.png'), dpi=300)
 
 
@@ -486,7 +548,7 @@ def fit_umap(latent_space_dir, folder_dir, which_fc, latent_space_file_name, fit
     else:
         latent_space_matrix = load_npz_file(latent_space_dir, latent_space_file_name,
                                             mode='fit')
-        umap_model = umap.UMAP(random_state=34, n_components=2).fit(latent_space_matrix)
+        umap_model = umap.UMAP(random_state=56, n_components=2).fit(latent_space_matrix)
         joblib.dump(umap_model, os.path.join(umap_fit_models_folder_dir, model_name))
         if fit_umap_according_to_epoch == 'fit to alternative latent space':
             get_umap_embedding_alternative_umap(latent_space_matrix, umap_model, folder_dir, which_fc)
@@ -552,9 +614,9 @@ def extract_dim_reduction_embeddings(folder_dir, args, latent_space_dir, which_f
 def extract_dim_reduction_images_to_plot(dim_reduction_results):
     image_to_plot_dim_reduction = []
     for i in range(len(dim_reduction_results)):
-        dim_reduction_image_1 = np.expand_dims(dim_reduction_results[i][226], axis=0)
-        dim_reduction_image_2 = np.expand_dims(dim_reduction_results[i][85], axis=0)
-        dim_reduction_image_3 = np.expand_dims(dim_reduction_results[i][154], axis=0)
+        dim_reduction_image_1 = np.expand_dims(dim_reduction_results[i][specific_images_to_plot[0]], axis=0)
+        dim_reduction_image_2 = np.expand_dims(dim_reduction_results[i][specific_images_to_plot[1]], axis=0)
+        dim_reduction_image_3 = np.expand_dims(dim_reduction_results[i][specific_images_to_plot[2]], axis=0)
         image_to_plot_dim_reduction += [
             np.concatenate((dim_reduction_image_1, dim_reduction_image_2, dim_reduction_image_3))]
     return image_to_plot_dim_reduction
@@ -566,10 +628,10 @@ def set_axis(h_fig, mode, x_min=None, x_max=None, y_min=None, y_max=None):
         # ======= set max and min for ax, remove ticks and the boxes axises ======
         h_ax.set_xlim(x_min, x_max)
         h_ax.set_ylim(y_min, y_max)
-        # h_ax.spines['top'].set_visible(False)
-        # h_ax.spines['right'].set_visible(False)
-        # h_ax.spines['bottom'].set_visible(False)
-        # h_ax.spines['left'].set_visible(False)
+        h_ax.spines['top'].set_visible(False)
+        h_ax.spines['right'].set_visible(False)
+        h_ax.spines['bottom'].set_visible(False)
+        h_ax.spines['left'].set_visible(False)
         h_ax.set_xlabel('UMAP 1', fontsize=11)
         h_ax.set_ylabel('UMAP 2', fontsize=11)
     elif mode == 'rat_image_1':
@@ -581,8 +643,8 @@ def set_axis(h_fig, mode, x_min=None, x_max=None, y_min=None, y_max=None):
     elif mode == 'rat_image_3':
         h_ax = h_fig.add_axes([0.7, 0.7, 0.15, 0.15])
         h_ax.set_axis_off()
-    # h_ax.get_xaxis().set_ticks([])
-    # h_ax.get_yaxis().set_ticks([])
+    h_ax.get_xaxis().set_ticks([])
+    h_ax.get_yaxis().set_ticks([])
     return h_ax
 
 
@@ -597,18 +659,29 @@ def extract_dots_for_line(images_to_plot_dim_reduction, axis_limits):
     return dots_to_plot_line
 
 
-def extract_images_to_plot(save_folder_dir,args):
-    images = load_plus_scale_images(args)
-    images = torch.FloatTensor(images).unsqueeze(1)
-    images_to_plot = torch.cat([images[226], images[85], images[154]]).to(args['device']).unsqueeze(1)
-    dataloader_images_to_plot = DataLoader(images_to_plot, batch_size=2,
-                                           shuffle=False)
+def extract_images_to_plot(save_folder_dir, args, folder_dir):
+    # ====== set model to test =====
     model_to_test = set_model_list(args['checkpoint_path'], 'last')[0]
-    model = Autoencoder(args['latent_space_dim']).to(args['device'])
-    checkpoint = torch.load(os.path.join(args['checkpoint_path'], model_to_test))
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model = load_model(model_to_test, args)
+    # ====== set which images we want to plot =====
+    # ===== if the feature were extracted by PCA than load the pca as the images (network input) ====
+    if args['dim_reduction_algo'] == 'PCA':
+        images = load_npz_file(os.path.join(folder_dir,'Latent_space_arrays_fc1'), 'latent_space_PCA.npz', mode='transform')
+        images = torch.FloatTensor(images).unsqueeze(1)
+        images_to_plot = torch.cat([images[specific_images_to_plot[0]],
+                                    images[specific_images_to_plot[1]],
+                                    images[specific_images_to_plot[2]]]).to(args['device'])
+    else:
+        images = load_plus_scale_images(args)
+        images = torch.FloatTensor(images).unsqueeze(1)
+        images_to_plot = torch.cat([images[specific_images_to_plot[0]],
+                                    images[specific_images_to_plot[1]],
+                                    images[specific_images_to_plot[2]]]).to(args['device']).unsqueeze(1)
+    dataloader_images_to_plot = DataLoader(images_to_plot, batch_size=3,
+                                           shuffle=False)
+    # ====== extract de-noised images ====
     with torch.no_grad():
-        __, ___, predicted_images = test_model(model, dataloader_images_to_plot, nn.MSELoss(), 'test', save_folder_dir)
+        __, ___, predicted_images = test_model(model, dataloader_images_to_plot, None, 'test', save_folder_dir)
     return predicted_images.squeeze(1)
 
 
@@ -623,23 +696,105 @@ def calculate_max_min_axis(array_to_boundaries_on):  # todo expand to 3D
     y_max, y_min = max_axis[1], min_axis[1]
     # ====== choosingg according to which set of boundaries we will set the axis =======
     max_axis = math.ceil(max(y_max, x_max))
-    min_axis = math.ceil(min(y_min, y_max))
+    min_axis = math.floor(min(y_min, x_min))
+    absolute_value = max(abs(max_axis), abs(min_axis))
+    max_axis = absolute_value
+    min_axis = -1 * absolute_value
     # ====== adding factor to the boundary =======
     for element in [max_axis, min_axis]:
         factor = 0.5 if element >= 0 else -0.5
         element += factor
-
     return max_axis, min_axis, max_axis, min_axis
 
 
 
 def load_npz_file(file_dir, file_name, mode):
-    if mode == 'fit':
-        load_file_path = file_name
-    elif mode == 'load_embeddings':
+    if mode == 'load_embeddings':
         load_file_path = file_dir
     else:
         load_file_path = os.path.join(file_dir, file_name)
     with np.load(load_file_path) as f:
         np_array = f['arr_0']
     return np_array
+
+
+def get_latent_space_pca(args, folder_dir):
+    dataloader_dict = loading_plus_preprocessing_data(args, split_to_train_val=True)
+    pca = PCA(n_components=args['pca_umap_dim_reduction'])
+    images, pca_results = [], []
+    for index, dataloader in dataloader_dict.items():
+        dataset_array = dataloader.dataset.cpu().numpy()
+        dataset_array_flatten = dataset_array.reshape(dataset_array.shape[0], -1)
+        if index == 0:
+            pca.fit(dataset_array_flatten)
+            # ====== calculate variance ratios and plot it ======
+            variance = pca.explained_variance_ratio_
+            var_explained_by_dim = np.round(np.cumsum(pca.explained_variance_ratio_ * 100), decimals=3)
+            extract_pca_data_to_file(folder_dir, variance, var_explained_by_dim, 00)
+        pca_result = pca.transform(dataset_array_flatten)
+        pca_results += [torch.tensor(pca_result, device=args['device']).float()]
+    # ====== return dataset where the x is the PCA reduction results and in the y is the mapped features
+    # that would be used to calculate the loss ======
+    dataset = {index: TensorDataset(pca_results[index], dataloader_dict[index].dataset) for index in
+                   range(len(dataloader_dict))}
+    # ===== save the PCA latent space into a file =====
+    save_latent_space_into_file(args, pca, folder_dir, 'PCA')
+    return dataset
+
+
+def save_latent_space_into_file(args, model, folder_dir, method):
+    dataloader = loading_plus_preprocessing_data(args, split_to_train_val=False)
+    dataset_array = dataloader.dataset.cpu().numpy()
+    dataset_array_flatten = dataset_array.reshape(dataset_array.shape[0], -1)
+    all_data_results = model.transform(dataset_array_flatten)
+    save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_fc1')
+    create_folder_if_needed(save_latent_space_folder)
+    save_latent_space_to_file(all_data_results, save_latent_space_folder, epoch=method, method=method)
+    if args['pca_umap_dim_reduction'] == 2:
+        dataset_array = dataloader.dataset.cpu().squeeze(1).numpy().swapaxes(1, 2)
+        visualize_umap_embeddings(args, folder_dir, 'fc1',
+                                  [all_data_results], method, dataset_array)
+
+
+def extract_pca_data_to_file(folder_dir, variance, var_explained_by_dim,
+                             n_components_95):  # todo fix, where do we use it?
+    file_path = os.path.join(folder_dir, 'pca_data.txt')
+    plot_pca_var_per_componets(var_explained_by_dim, folder_dir)
+    n_componets_array = np.arange(len(variance))
+    variance_per_component = np.array(list(zip(n_componets_array, variance)))
+    var_explained_by_dim = np.array(list(zip(n_componets_array, var_explained_by_dim)))
+    with open(file_path, 'w') as f:
+        f.write('For PCA which explains 95 percent of the variance we need to set %d components\n' % n_components_95)
+        np.savetxt(f, variance_per_component, delimiter=',')
+        np.savetxt(f, var_explained_by_dim, delimiter=',')
+
+
+def plot_pca_var_per_componets(var_explained_by_dim, folder_dir):
+    plt.ylabel('% Variance Explained')
+    plt.xlabel('# of Components')
+    plt.xticks(np.arange(len(var_explained_by_dim)), np.arange(len(var_explained_by_dim)) + 1 )
+    plt.title('PCA Analysis with %d Components' % (var_explained_by_dim.shape[0]))
+    plt.plot(var_explained_by_dim)
+    plt.savefig(os.path.join(folder_dir, 'PCA Analysis with %d Components.png' % (var_explained_by_dim.shape[0])))
+    plt.close()
+
+
+def get_latent_space_umap(args, folder_dir):
+    dataloader_dict = loading_plus_preprocessing_data(args, split_to_train_val=True)
+    umap_model = umap.UMAP(random_state=42, n_components=args['pca_umap_dim_reduction'])
+    umap_results = []
+    for index, dataloader in dataloader_dict.items():
+        dataset_array = dataloader.dataset.cpu().numpy()
+        dataset_array_flatten = dataset_array.reshape(dataset_array.shape[0], -1)
+        if index == 0:
+            umap_model.fit(dataset_array_flatten)
+            joblib.dump(umap_model, os.path.join(folder_dir, 'UMAP_model.sav'))
+        umap_result = umap_model.transform(dataset_array_flatten)
+        umap_results += [torch.tensor(umap_result, device=args['device']).float()]
+    # ====== return dataset where the x is the UMAP reduction results and in the y is the mapped features
+    # that would be used to calculate the loss ======
+    dataset = {index: TensorDataset(umap_results[index], dataloader_dict[index].dataset) for index in
+               range(len(dataloader_dict))}
+    # ===== save the PCA latent space into a file =====
+    save_latent_space_into_file(args, umap_model, folder_dir, 'UMAP')
+    return dataset
