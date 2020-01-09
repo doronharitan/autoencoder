@@ -257,7 +257,7 @@ def load_model(model_name, args):
     # ==== set the model according latnet space encoder options - 'PCA', 'UMAP' or 'AE encoder'========
     checkpoint = torch.load(os.path.join(args['checkpoint_path'], model_name))
     # if checkpoint['model_name'] != 'Autoencoder':
-    if args['dim_reduction_algo'] == 'PCA':
+    if args['dim_reduction_algo'] == 'PCA' or args['dim_reduction_algo'] == 'UMAP':
         model = DimReductionDecoder(args['latent_space_dim']).to(args['device'])
     else:
         model = Autoencoder(args['latent_space_dim']).to(args['device'])

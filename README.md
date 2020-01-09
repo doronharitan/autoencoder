@@ -134,7 +134,7 @@ python Autoencoder/train.py   --train_data_dir       dir_where_the_data_for_the_
 python Autoencoder/train_encoder_pca_umap.py   --train_data_dir       dir_where_trained_data_is_saved\
                                                --file_name            name_of_train_data_file\
                                                --meta_data_file_name  name_of_metadata_file\ 
-                                               --dim_reduction_algo   'UMAP' or 'PCA' 
+                                               --dim_reduction_algo   'UMAP' or 'PCA'
 ```
 - #### Predict rat body angle Train mode
 ```
@@ -142,14 +142,24 @@ add all condtion and possabilites***
 ```
 
 ### Test mode:
+By default model checkpoints are saved in the 'model check points' directory using the following naming convention:
+ model_<num_epoch>_epoch.pth.tar 
+ 
+- #### Convolutional AutoEncoder Test mode and PCA/UMAP as encoder Test mode
 Testing the ability of the model to de-noise an image on the designated test data.
-
-By default:
- 1. Model checkpoints are saved in the 'model check points' directory using the following naming convention:
- model_<num_epoch>_epoch.pth.tar
- 2. The model is saved every X (args.val_check_interval)* epochs
-
-*default settings, can be change by setting params: args.val_check_interval
+```
+python Autoencoder/test.py    --train_data_dir       dir_where_the_data_for_the_test_is_saved\
+                              --file_name            name_of_test_data_file\
+                              --meta_data_file_name  name_of_metadata_file\
+                              --checkpoint_to_load   name_of_checkpoint_to_load\
+                              --checkpoint_path      path_of_the_checkpoint_to_load
+                               #if we want to test the UMAP/PCA as encoder please add the following arg:
+                              --dim_reduction_algo   'UMAP' or 'PCA'
+```
+- #### Predict rat body angle Test mode
+```
+add all condtion and possabilites***
+```
 
 #### Default args parameters to train and test modes
 ```
@@ -180,7 +190,7 @@ python visualize_change_of_latent_space.py   --train_data_dir       dir_where_tr
                                              --dim_reduction_algo   'UMAP' or 'PCA' or ''
 ```
 
-#### Default args parameters to train and test modes
+#### Default args parameters to visualize change of latent space mode
 ```
 # used in the visualize_change_of_latent_space.py
 --extract_latent_space                                True      #In the dim reduction analysis should we extract the latent space? 
@@ -192,20 +202,6 @@ python visualize_change_of_latent_space.py   --train_data_dir       dir_where_tr
 ```
 
 
-explain how to run it 
-What we wanted to achive 
-what we chose to look on and why, 
-what was the results.
-add analysis woth diffrent colors 
-
-what question it rises - 
-1. regarding how the code changes with time, how it learns to map the featuers
-2. regarding what happens if I will extract the feature using dim reduction teqnicques like umap and pca instead of the encoder will the network learn?
-3. what happen if I will change the task will the new network learn the same map? 
-and than add body prediction
-add transfer and etc
- #######explain about the fc2 option
- ######add what is the requirments of the metadata format. what is the datapoints labels that I have
 ## Results 
 The train model that was tested below was trained on a randomly chosen train/test set (from the 3 possible provided by UCF-101 dataset).
 The model was trained and thus, tested on 55 classes from the 101 possible classes in UCF-101 dataset.
