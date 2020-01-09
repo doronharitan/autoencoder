@@ -211,7 +211,7 @@ behaving rats in an arena.The structure of the arena includes 6 ports where the 
    
 - ##### Convolutional AutoEncoder test results:
     A video showing a stack of sample images from the test dataset before the de-noise and after is seen below: 
-  <p align="center"><img width="500" height="250" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+  <p align="center"><img width="400" height="200" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
     From the comparision above we can learn that the Autoencoder was able to clean the noise from the images 
 
     I was curious to learn **what is encoded in the AE latent space**? 
@@ -224,8 +224,8 @@ To assess what specific elements from the image were learned and represented in 
  colored the data-points according to specific condition. The conditions I used are: 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
-    <p align="left"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg">
-   <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <p align="left"><img  src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  
 
