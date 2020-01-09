@@ -224,8 +224,8 @@ To assess what specific elements from the image were learned and represented in 
  colored the data-points according to specific condition. The conditions I used are: 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
-    <p align="left"><img  src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <p align="left"><img width="100" height="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="100" height="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  
 
