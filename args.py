@@ -8,7 +8,7 @@ parser.add_argument('--train_data_dir', default=r'C:\Users\Doron\Desktop\Autoenc
                     type=str, help='The directory of the train/test data')
 parser.add_argument('--meta_data_file_name', default='mdata_for_mami.npy',
                     type=str, help='The name of the meta data file (located in the train data dir)')
-parser.add_argument('--file_name', default='ims_for_doron.npz', type=str,
+parser.add_argument('--file_name', default='test_raw_image.npy', type=str,
                     help='The name of the file containing the data')
 parser.add_argument('--batch_size', default=16, type=int, help='Batch size')
 parser.add_argument('--batch_size_latent_space', default=128, type=int,

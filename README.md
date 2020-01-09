@@ -203,9 +203,17 @@ python visualize_change_of_latent_space.py   --train_data_dir       dir_where_tr
 
 
 ## Results 
-The train model that was tested below was trained on a randomly chosen train/test set (from the 3 possible provided by UCF-101 dataset).
-The model was trained and thus, tested on 55 classes from the 101 possible classes in UCF-101 dataset.
-- _**Basic test mode**_:  The model reached a classification accuracy of **90.5%**.
+The train model that was tested below was trained on 32K 50X50X1 gray-scale images of freely 
+behaving rats in an arena.The structure of the arena includes 6 ports where the rat can get food from.
+ Thus, images could capture a rat in the middle space of the arena (the image would not include
+  a ports or walls of the area) and it could capture a rat in a port or in the edges of the arena
+   (the image would include a wall of the area).
+   
+- ##### Convolutional AutoEncoder test results:
+A video of all of the stacked 2K test images before the de-noise and after is seen below: 
+  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+
+From the images above we can see that the Autoencoder was able to clean the noise from the images 
 
 ##### PCA/UMAP as encoder results
 
