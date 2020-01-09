@@ -183,10 +183,10 @@ python visualize_change_of_latent_space.py   --train_data_dir       dir_where_tr
 #### Default args parameters to train and test modes
 ```
 # used in the visualize_change_of_latent_space.py
---extract_latent_space              True,       #In the dim reduction analysis should we extract the latent space? 
---extract_latent_space_fc2          True        #In the dim reduction analysis should we analize also the FC_2 (begining of the decoder) feature space? 
---analysis_latent_space_stop_index  'All',      #enable an early stop of latent_space analysis in a case we dont want to plot all of the latent space saved during the training
---save_plots_or_only_create_movie   False       #in the dim reduction visualization do we want to save each plot or do we want to create only the video?
+--extract_latent_space                                True      #In the dim reduction analysis should we extract the latent space? 
+--extract_latent_space_fc2                            True      #In the dim reduction analysis should we analize also the FC_2 (begining of the decoder) feature space? 
+--analysis_latent_space_stop_index                    'All',    #enable an early stop of latent_space analysis in a case we dont want to plot all of the latent space saved during the training
+--save_plots_or_only_create_movie                     False     #in the dim reduction visualization do we want to save each plot or do we want to create only the video?
 --umap_dim_reduction_fit_according_to_specific_epoch  'last'    #according to which epoch to fit the umap? Options: every_epoch, first, last, fit to alternative latent space, All
 --alternative_latent_space_to_fit_dir                 ''        #What is the dir of the alternative latent space we want to fit the data to
 ```
