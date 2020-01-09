@@ -211,7 +211,7 @@ behaving rats in an arena.The structure of the arena includes 6 ports where the 
    
 - ##### Convolutional AutoEncoder test results:
 A video of all of the stacked 2K test images before the de-noise and after is seen below: 
-  <p align="center"><img width="600" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+  <p align="center"><img width="500" height="250" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
 
 From the images above we can see that the Autoencoder was able to clean the noise from the images 
 
