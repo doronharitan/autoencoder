@@ -225,7 +225,7 @@ To assess what specific elements from the image were learned and represented in 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
     <p align="center"><img width="400" height="350" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="350" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <img width="375" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  
 
