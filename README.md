@@ -235,8 +235,8 @@ To assess what specific elements from the image were learned and represented in 
  colored the data-points according to specific condition. The conditions I used are: 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
-    <p align="center"><img width="300" height="250" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="240" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="360" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  The above results were surprising, they show that the latent space that
   was learned with training represented the dimensionality of the arena. 
