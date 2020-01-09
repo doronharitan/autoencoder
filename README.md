@@ -53,7 +53,7 @@ A network which uses feature embeddings (AKA the latent representation) that wer
   2. pre-trained AE encoder (trained on the de-noise task) with different depth of unfreezing layers 
   
  The network architecture:
-  <p align="center"><img width="650" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
+  <p align="center"><img width="600" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
 
 The input of the network is the same as for the AE network.
 This network was used in order to address the 3rd question "How the objective of the learning affects the latent space neural
