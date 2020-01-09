@@ -133,7 +133,7 @@ python Autoencoder/train.py   --train_data_dir       dir_where_the_data_for_the_
 ```
 python Autoencoder/train_encoder_pca_umap.py   --train_data_dir       dir_where_trained_data_is_saved\
                                                --file_name            name_of_train_data_file\
-                                               --meta_data_file_name  name_of_metadata_file\                                           
+                                               --meta_data_file_name  name_of_metadata_file\ 
                                                --dim_reduction_algo   'UMAP' or 'PCA' 
 ```
 - #### Predict rat body angle Train mode
