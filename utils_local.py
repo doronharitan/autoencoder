@@ -3,25 +3,20 @@ import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset, random_split
 from torchvision.utils import save_image
-from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
-from mpl_toolkits.mplot3d import Axes3D
 import time
 import umap
 from sklearn.decomposition import PCA
 import joblib
-from PIL import Image
 import os
 from natsort import natsorted
 import numpy as np
 import math
 from tqdm import tqdm
-import random
 import matplotlib.animation as manimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from torch import nn
 from args import parser
 from models.autoencoder_model import Autoencoder
 from models.pca_umap_decoder_model import DimReductionDecoder

@@ -42,7 +42,7 @@ parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
 parser.add_argument('--pca_umap_dim_reduction', default=16, type=int,
                     help='To what dim the PCA should reduce the data dim')
-parser.add_argument('--dim_reduction_algo', default='UMAP', type=str,
+parser.add_argument('--dim_reduction_algo', default='PCA', type=str,
                     help='The algorithm that is used for the latent space dim reduction in the '
                          'train_encoder_pca_umap.py script. options: UMAP or PCA')
 parser.add_argument('--extract_latent_space', default=True, type=bool,
