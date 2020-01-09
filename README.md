@@ -210,10 +210,24 @@ behaving rats in an arena.The structure of the arena includes 6 ports where the 
    (the image would include a wall of the area).
    
 - ##### Convolutional AutoEncoder test results:
-A video of all of the stacked 2K test images before the de-noise and after is seen below: 
+    A video showing a stack of sample images from the test dataset before the de-noise and after is seen below: 
   <p align="center"><img width="500" height="250" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+    From the comparision above we can learn that the Autoencoder was able to clean the noise from the images 
 
-From the images above we can see that the Autoencoder was able to clean the noise from the images 
+    I was curious to learn **what is encoded in the AE latent space**? 
+or in other words, what are the features that the model learn to extract from the image, so only 
+based on them the decoder can reconstruct the image but without it's noise. 
+
+    To address this question, I used UMAP to reduce the dimensionality of my latent space (from 16D to 2D)
+and than I plotted the results (for a reminder how I did it and which script I used [click here](#visualize-change-of-latent-space)).
+To assess what specific elements from the image were learned and represented in the latent space I
+ colored the data-points according to specific condition. The conditions I used are: 
+ 1. The body angle of the rat 2. distance from the arena center.
+ The results can be seen here:
+    <p align="left"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg">
+   <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+ 
+ 
 
 ##### PCA/UMAP as encoder results
 
