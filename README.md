@@ -37,7 +37,7 @@ The network uses feature embeddings (AKA the latent representation) that were ex
  For decoding, I used the same architecture as the AE decoder.
 
  The network architecture:
-  <p align="center"><img width="800" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
+  <p align="center"><img width="700" height="250" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
 
 The input of the network is the same as for the AE network.
 This network was used in order to address the 2nd question " If we create the latent space that would be used as the input of the decoder by using dimension (dim) reduction techniques 
