@@ -11,6 +11,7 @@ But, with time and curiosity, the project become more about the questions:
 
 # Conclusions
 (#add)
+1. dim of the arena is learned (add video)
 
 ## In this git you can find:
 - [Convolutional AutoEncoder](#convolutional-autoencoder) - short explanation on what I did and how I used it 
@@ -227,8 +228,16 @@ To assess what specific elements from the image were learned and represented in 
     <p align="center"><img width="400" height="350" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
     <img width="360" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
- 
-
+ The above results were surprising, they show that the latent space that
+  was learned with training represented the dimensionality of the arena. 
+  In the plot above We can actually see an arena (circle) with 6 ports spaced evenly around it. 
+  This result is strengthened when we consider also the coloring of the data-points, which shows that 
+  the topological shape that was learned is arrange according to the distance of the rat from the 
+  center of the arena and by the body angle of the rat.  
+  When you consider the fact that input image could be from any location in the arena, its quiet amazing 
+  that the network learned to mapped it to the real arena shape and used this element as an important 
+  feature to encode the image data.
+  
 ##### PCA/UMAP as encoder results
 
 ##### predict rat boy angle results
