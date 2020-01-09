@@ -236,7 +236,7 @@ To assess what specific elements from the image were learned and represented in 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
     <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="360" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <img width="330" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  The above results were surprising, they show that the latent space that
   was learned with training represented the dimensionality of the arena. 
