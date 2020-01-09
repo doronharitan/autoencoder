@@ -146,7 +146,7 @@ add all condtion and possabilites***
 By default model checkpoints are saved in the 'model check points' directory using the following naming convention:
  model_<num_epoch>_epoch.pth.tar 
  
-- #### Convolutional AutoEncoder Test mode and PCA/UMAP as encoder Test mode
+- #### Convolutional AutoEncoder Test mode Test mode
 Testing the ability of the model to de-noise an image on the designated test data.
 ```
 python Autoencoder/test.py    --train_data_dir       dir_where_the_data_for_the_test_is_saved\
@@ -154,9 +154,19 @@ python Autoencoder/test.py    --train_data_dir       dir_where_the_data_for_the_
                               --meta_data_file_name  name_of_metadata_file\
                               --checkpoint_to_load   name_of_checkpoint_to_load\
                               --checkpoint_path      path_of_the_checkpoint_to_load
-                               #if we want to test the UMAP/PCA as encoder please add the following arg:
-                              --dim_reduction_algo   'UMAP' or 'PCA'
 ```
+- #### PCA/UMAP as encoder Test mode 
+Testing the ability of the model to de-noise an image on the designated test data.
+
+```
+python Autoencoder/test_pca_umap_as_encoder.py  --train_data_dir       dir_where_the_data_for_the_test_is_saved\
+                                                --file_name            name_of_test_data_file\
+                                                --meta_data_file_name  name_of_metadata_file\
+                                                --checkpoint_to_load   name_of_checkpoint_to_load\
+                                                --checkpoint_path      path_of_the_checkpoint_to_load\
+                                                --dim_reduction_algo   'UMAP' or 'PCA'
+```
+
 - #### Predict rat body angle Test mode
 ```
 add all condtion and possabilites***
@@ -225,8 +235,8 @@ To assess what specific elements from the image were learned and represented in 
  colored the data-points according to specific condition. The conditions I used are: 
  1. The body angle of the rat 2. distance from the arena center.
  The results can be seen here:
-    <p align="center"><img width="400" height="350" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="360" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+    <p align="center"><img width="300" height="220" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="260" height="200" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
  
  The above results were surprising, they show that the latent space that
   was learned with training represented the dimensionality of the arena. 
@@ -239,5 +249,18 @@ To assess what specific elements from the image were learned and represented in 
   feature to encode the image data.
   
 ##### PCA/UMAP as encoder results
+In the autoencoder we extract the features embedding using learned convolotinal layers. meaning
+the network learns to extract the features that are important for the task, in this case, the 
+feature that would enable the reconstructions of the image without it's noise. What would happen 
+if I would create the features embedding using dim reduction techniques, so the only learned 
+part in our network would be the decoder? would the decoder be able to learn how to decode
+ the de-noise images from features embedding?
+ To test the above I used PCA and UMAP to reduce the dim of the input images and than passed it to a decoder
+ with the same architecture as the AE one. For each technique I reduced the features embedding to 16D and 2D.
+ 
+ The results are shown here:
+ 
+ 
+ We can see that ....
 
 ##### predict rat boy angle results

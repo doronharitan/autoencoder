@@ -31,7 +31,7 @@ color_datapoints_according_to_specific_condition_dict = {7: 'Angle of the body',
 #                                       12: 'Did the rat inserted noise into port'}
 
 
-specific_images_to_plot = [154, 85, 226]
+specific_images_to_plot = [154, 226, 85]
 
 def setting_parameters(use_folder_dir=False, mode=None):
     args = parser.parse_args()
@@ -197,8 +197,13 @@ def test_model_with_labels(model, test_dataloader, criterion, epoch, save_images
     val_loss = 0.0
     model.eval()
     # ===== save output images and original images if the test mode is true ======
+    if epoch == 'test':
+        output_images, original_images = [], []
     for batch_num, (local_images_batch, local_labels_batch) in enumerate(test_dataloader):
         loss, output = prediction_step(model, local_images_batch, criterion, labels=local_labels_batch ,mode='test')
+        if epoch == 'test':
+            output_images += [output.detach().cpu()]
+            original_images += [local_labels_batch.detach().cpu()]
         val_loss += loss.item()
     # ====== Visualize the output images ======
     if local_images_batch.shape[1] > 1:
@@ -206,7 +211,12 @@ def test_model_with_labels(model, test_dataloader, criterion, epoch, save_images
     else:
         output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
     save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
-    return val_loss
+    # ====== if test mode return images and output else return only loss======
+    if epoch == 'test':
+        return val_loss, torch.cat(original_images), torch.cat(output_images)
+    else:
+        return val_loss
+
 
 
 def get_latent_space(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mode=False, model=None,
@@ -456,22 +466,22 @@ def plot_umap_embedding(axis_limits, dim_reduction_results, color_array, cmap, d
                     scalarMap.to_rgba(color_array[specific_images_to_plot[1]]),
                     scalarMap.to_rgba(color_array[specific_images_to_plot[2]])]
     # ====== plot each circle above and each image, will be done only once=======
-    for i in range(3):
-        h_ax = set_axis(h_fig, 'rat_image_{}'.format(i + 1))
-        circle_image = plt.Circle((25, -4), 2, color=color_circle[i], clip_on=False)
-        h_ax.add_artist(circle_image)
-        h_ax.matshow(images_to_plot[i], cmap='gray')
+    # for i in range(3):
+    #     h_ax = set_axis(h_fig, 'rat_image_{}'.format(i + 1))
+    #     circle_image = plt.Circle((25, -4), 2, color=color_circle[i], clip_on=False)
+    #     h_ax.add_artist(circle_image)
+    #     h_ax.matshow(images_to_plot[i], cmap='gray')
     # ===== plots lines from mini figure to the images on the side ======
-    h_ax_2 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2],
-                      y_max=axis_limits[3])
-    h_line_dict = {
-        i: h_ax_2.plot(dots_to_plot_line[-1][:, 0:2][i], dots_to_plot_line[-1][:, 2:4][i], alpha=0.5, c='gray')[0]
-        for i in range(3)}
+    # h_ax_2 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2],
+    #                   y_max=axis_limits[3])
+    # h_line_dict = {
+    #     i: h_ax_2.plot(dots_to_plot_line[-1][:, 0:2][i], dots_to_plot_line[-1][:, 2:4][i], alpha=0.5, c='gray')[0]
+    #     for i in range(3)}
     # ====== plot specific images dim reduction dots=======
-    h_ax_3 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2], y_max=axis_limits[3])
-    h_im_2 = h_ax_3.scatter(images_to_plot_dim_reduction[-1][:, 0], images_to_plot_dim_reduction[-1][:, 1],
-                            s=50,
-                            c=color_circle, edgecolors='black')
+    # h_ax_3 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2], y_max=axis_limits[3])
+    # h_im_2 = h_ax_3.scatter(images_to_plot_dim_reduction[-1][:, 0], images_to_plot_dim_reduction[-1][:, 1],
+    #                         s=50,
+    #                         c=color_circle, edgecolors='black')
 
     if len(dots_to_plot_line) == 1:
         plt.savefig(save_video_path, dpi=300)
@@ -722,6 +732,7 @@ def get_latent_space_pca(args, folder_dir):
         dataset_array_flatten = dataset_array.reshape(dataset_array.shape[0], -1)
         if index == 0:
             pca.fit(dataset_array_flatten)
+            joblib.dump(pca, os.path.join(folder_dir, 'PCA_model.sav'))
             # ====== calculate variance ratios and plot it ======
             variance = pca.explained_variance_ratio_
             var_explained_by_dim = np.round(np.cumsum(pca.explained_variance_ratio_ * 100), decimals=3)
@@ -790,6 +801,25 @@ def get_latent_space_umap(args, folder_dir):
     # that would be used to calculate the loss ======
     dataset = {index: TensorDataset(umap_results[index], dataloader_dict[index].dataset) for index in
                range(len(dataloader_dict))}
-    # ===== save the PCA latent space into a file =====
+    # ===== save the UMAP latent space into a file =====
     save_latent_space_into_file(args, umap_model, folder_dir, 'UMAP')
     return dataset
+
+
+def get_latent_space_pca_umap_test_mode(args, folder_dir):
+    dataloader = loading_plus_preprocessing_data(args, split_to_train_val=False)
+    latent_space_results = []
+    for local_images_batch in dataloader:
+        dataset_array = local_images_batch.cpu().numpy()
+        dataset_array_flatten = dataset_array.reshape(dataset_array.shape[0], -1)
+        fit_model = joblib.load(os.path.join(os.path.normpath(folder_dir + os.sep + os.pardir),
+                                             '{}_model.sav'.format(args['dim_reduction_algo'])))
+        latent_space = fit_model.transform(dataset_array_flatten)
+        latent_space_results += [torch.tensor(latent_space, device=args['device']).float()]
+    # ====== return dataset where the x is the UMAP reduction results and in the y is the mapped features
+    # that would be used to calculate the loss ======
+    latent_space_results = torch.cat(latent_space_results)
+    dataset = TensorDataset(latent_space_results, dataloader.dataset)
+    dataloader = DataLoader(dataset, batch_size=args['batch_size'], shuffle=True)
+    # ===== save the UMAP latent space into a file =====
+    return dataloader

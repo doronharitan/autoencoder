@@ -34,7 +34,7 @@ parser.add_argument('--save_model_checkpoints', default=True, type=bool,
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints')
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\PCA_16D\model check points',
+parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\20200108-184239\model check points',
                     type=str, help='Optional path to checkpoint model')
 parser.add_argument('--checkpoint_to_load', default='model_149_epoch.pth.tar',
                     type=str, help='The name of the model we want to load')
@@ -43,7 +43,7 @@ parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
 parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
-parser.add_argument('--dim_reduction_algo', default='PCA', type=str,
+parser.add_argument('--dim_reduction_algo', default='UMAP', type=str,
                     help='The algorithm that is used for the latent space dim reduction in the '
                          'train_encoder_pca_umap.py script. options: UMAP or PCA')
 parser.add_argument('--extract_latent_space', default=True, type=bool,
