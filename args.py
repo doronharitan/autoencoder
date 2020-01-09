@@ -3,7 +3,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Convolutional AutoEncoder for image noise reduction')
 parser.add_argument('--run_goal', default='', type=str,
-                    help='train_the_network')
+                    help='What is the goal of the run, Would be saved in the setting information for each run')
 parser.add_argument('--train_data_dir', default=r'C:\Users\Doron\Desktop\Autoencoder\train data',
                     type=str, help='The directory of the train/test data')
 parser.add_argument('--meta_data_file_name', default='mdata_for_mami.npy',
@@ -25,10 +25,13 @@ parser.add_argument('--open_new_folder', default='True', type=str,
                          'or "debug"')
 parser.add_argument('--max_pixel_value', default=255.0, type=float,
                     help='max pixel value, would be used for the rescaling of the images')
-parser.add_argument('--latent_space_dim', default=16, type=int, help='The dim of the Conv FC output (default:16)')
+parser.add_argument('--latent_space_dim', default=16, type=int, help='For AE: The dim of the encoder FC output '
+                                                                     'When we use Dim reduction to encode the images '
+                                                                     'this param would contol the low dim the algo will '
+                                                                     'reduce to (default:16)')
 parser.add_argument('--save_model_checkpoints', default=True, type=bool,
-                    help='should we save the model checkpoints during the run') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints') #todo make sure it is used correctly
+                    help='should we save the model checkpoints during the run')
+parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints')
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?') #todo make sure it is used correctly
 parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\PCA_16D\model check points',
@@ -40,8 +43,6 @@ parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
 parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
-parser.add_argument('--pca_umap_dim_reduction', default=16, type=int,
-                    help='To what dim the PCA should reduce the data dim')
 parser.add_argument('--dim_reduction_algo', default='PCA', type=str,
                     help='The algorithm that is used for the latent space dim reduction in the '
                          'train_encoder_pca_umap.py script. options: UMAP or PCA')

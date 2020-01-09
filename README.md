@@ -9,13 +9,18 @@ But, with time and curiosity, the project become more about the questions:
     representation? in this case I compared the latent space representation 
     of AE vs direction tagger (predict rat body angle)
 
+# Conclusions
+(#add)
+
 ## In this git you can find:
 - [Convolutional AutoEncoder](#convolutional-autoencoder) - short explanation on what I did and how I used it 
+- [visualize change of latent space](#visualize-change-of-latent-space) - short explanation on what I did and how I used it 
 - [PCA/UMAP as encoder](#pcaumap-as-encoder) - short explanation on what I did and how I used it 
 - [Predict rat body angle](#predict-rat-body-angle) - short explanation on what I did and how I used it 
 - [Installation](#installation) instructions
 - [Dataset requirement](#dataset-requirement)
 - How to run the [Train and test modes](#train-and-test-modes) instructions
+- How to run the [visualize change of latent space run mode](#visualize-change-of-latent-space-mode) instructions 
 - [Results](#results) of my project
 
 ## Convolutional AutoEncoder
@@ -29,6 +34,30 @@ But, with time and curiosity, the project become more about the questions:
 The input of the network is 50X50 gray-scale* images (in my case I trained the network on 50X50X1 images of freely behaving rats)
 
 *default settings, can be change by setting params in the AE network.
+
+## visualize change of latent space
+In order to answer the first question "What is encoded in the AE latent space?", I built a script 
+(called visualize_change_of_latent_space.py) 
+which uses UMAP to reduce the dimensionality of the latent space to 2D (from 16D) and enables
+ to visualize the latent space embeddings.
+ 
+ The visualization make it easier to investigate the topological properties of the 
+ latent space embeddings. Together with coloring the data-points according to specific condition
+, for example the body angle of the rat, we can learn if the networks 
+learns to code in the latent space specific elements from the environment or the rat composition in the image. 
+
+The above script enables to fit a UMAP to the desired latent space and than transform a number of 
+chosen latent spaces to this UMAP model. For example, This is used in order to visualise the change in 
+the latent space representation with the training of the AE model. 
+In this case we fit the UMAP to the last latent space saved in the training mode and transformed each 
+latent space (saved form epoch zero till the end of the training) to this model. The result can be seen here (*add link) 
+
+The options to fit the UMAP model to are:
+1. 'last' - last saved latent space 
+2. 'first' - first saved latent space (epoch 0)
+3. 'alternative latent space' - meaning a latent space that you provide and is not necessarily from this run.
+4. 'all epochs' - fit and transform every latent space to it self
+4. 'All'
 
 ## PCA/UMAP as encoder
 The network uses feature embeddings (AKA the latent representation) that were extracted from images by dim
@@ -81,10 +110,15 @@ The dataset needs to be in npz/npy format. The dimensions of the array needs to 
 In case your images are not grey-scale, the dimension of the array need to be: dataset_size X num_channels X image_width X image_height.
 
 #### metadata file:
-As you would see in the results paragraph below(add link), the metadata file would be use to color the data points according to specific condition. for example the angle of the rat body (for more interesting details and results click here(add link)) 
+As you would see in the [results paragraph below](#results), the metadata file would be use: 1. To color the data points according to specific condition. for 
+example the angle of the rat body (for more interesting details and results click here(add link)) 2. As the labels in the predicted body angle task 
 
 The format of this file need to be npy. The array dimensions should be:  dataset_size X conditions (could be as many as you want). 
-To control which condition you want the data points to be color according to change the 'color_datapoints_according_to_specific_condition_dict' dictionary which appear in the beginning of utils_local.py.     
+To control which condition you want the data points to be color according to change the 'color_datapoints_according_to_specific_condition_dict'
+ dictionary which appear in the beginning of utils_local.py.     
+
+The metadata file needs to be saved in the same directory as the train/test data.
+
 
 ##  Train and test modes
 *Default args parameters to train and test modes are detailed below
@@ -92,11 +126,20 @@ To control which condition you want the data points to be color according to cha
 ### Train modes:  
 - #### Convolutional AutoEncoder Train mode
 ```
-python train.py   --train_data_dir dir_where_trained_data_is_saved    
+python Autoencoder/train.py   --train_data_dir       dir_where_the_data_for_the_training_is_saved\
+                              --file_name            name_of_train_data_file\
 ```
 - #### PCA/UMAP as encoder Train mode
-
-
+```
+python Autoencoder/train_encoder_pca_umap.py   --train_data_dir       dir_where_trained_data_is_saved\
+                                               --file_name            name_of_train_data_file\
+                                               --meta_data_file_name  name_of_metadata_file\                                           
+                                               --dim_reduction_algo   'UMAP' or 'PCA' 
+```
+- #### Predict rat body angle Train mode
+```
+add all condtion and possabilites***
+```
 
 ### Test mode:
 Testing the ability of the model to de-noise an image on the designated test data.
@@ -109,10 +152,44 @@ By default:
 *default settings, can be change by setting params: args.val_check_interval
 
 #### Default args parameters to train and test modes
+```
+--batch_size                        64 
+--batch_size_latent_space           128         #batch size for the analysis of the latent space
+--seed                              42
+--epochs                            150
+--split_size                        0.2         #set the size of the split between validation data and train data
+--lr                                1e-3
+--open_new_folder                   'True'      #open a new folder where all of the run data would be saved at 
+--max_pixel_value                   255.0       #raw images max pixel value you want to scale the images according to
+--latent_space_dim                  16          #The dim featuers you want to extract from the images
+--save_model_checkpoints            True
+--checkpoint_interval               5
+--load_checkpoint                   False
+--checkpoint_path                   ''          #The path of the checkpoint model we want to load
+--checkpoint_to_load                ''          #The name of the model checkpoint we want to load
+--save_latent_space                 True        #Should we save the latent space during the run? Would be use in the visualization script
+--checkpoint_latent_space_interval  3           #Interval between saving latent_space checkpoints
+--val_check_interval                5           #Interval between running validation test
+```
 
+## visualize change of latent space mode
+```
+python visualize_change_of_latent_space.py   --train_data_dir       dir_where_trained_data_is_saved\
+                                             --file_name            name_of_train_data_file\
+                                             --meta_data_file_name  name_of_metadata_file\                                           
+                                             --dim_reduction_algo   'UMAP' or 'PCA' or ''
+```
 
-
-
+#### Default args parameters to train and test modes
+```
+# used in the visualize_change_of_latent_space.py
+--extract_latent_space              True,       #In the dim reduction analysis should we extract the latent space? 
+--extract_latent_space_fc2          True        #In the dim reduction analysis should we analize also the FC_2 (begining of the decoder) feature space? 
+--analysis_latent_space_stop_index  'All',      #enable an early stop of latent_space analysis in a case we dont want to plot all of the latent space saved during the training
+--save_plots_or_only_create_movie   False       #in the dim reduction visualization do we want to save each plot or do we want to create only the video?
+--umap_dim_reduction_fit_according_to_specific_epoch  'last'    #according to which epoch to fit the umap? Options: every_epoch, first, last, fit to alternative latent space, All
+--alternative_latent_space_to_fit_dir                 ''        #What is the dir of the alternative latent space we want to fit the data to
+```
 
 
 explain how to run it 

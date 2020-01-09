@@ -258,7 +258,7 @@ def load_model(model_name, args):
     checkpoint = torch.load(os.path.join(args['checkpoint_path'], model_name))
     # if checkpoint['model_name'] != 'Autoencoder':
     if args['dim_reduction_algo'] == 'PCA':
-        model = DimReductionDecoder(args['pca_umap_dim_reduction']).to(args['device'])
+        model = DimReductionDecoder(args['latent_space_dim']).to(args['device'])
     else:
         model = Autoencoder(args['latent_space_dim']).to(args['device'])
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -715,7 +715,7 @@ def load_npz_file(file_dir, file_name, mode):
 
 def get_latent_space_pca(args, folder_dir):
     dataloader_dict = loading_plus_preprocessing_data(args, split_to_train_val=True)
-    pca = PCA(n_components=args['pca_umap_dim_reduction'])
+    pca = PCA(n_components=args['latent_space_dim'])
     images, pca_results = [], []
     for index, dataloader in dataloader_dict.items():
         dataset_array = dataloader.dataset.cpu().numpy()
@@ -745,7 +745,7 @@ def save_latent_space_into_file(args, model, folder_dir, method):
     save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_fc1')
     create_folder_if_needed(save_latent_space_folder)
     save_latent_space_to_file(all_data_results, save_latent_space_folder, epoch=method, method=method)
-    if args['pca_umap_dim_reduction'] == 2:
+    if args['latent_space_dim'] == 2:
         dataset_array = dataloader.dataset.cpu().squeeze(1).numpy().swapaxes(1, 2)
         visualize_umap_embeddings(args, folder_dir, 'fc1',
                                   [all_data_results], method, dataset_array)
@@ -776,7 +776,7 @@ def plot_pca_var_per_componets(var_explained_by_dim, folder_dir):
 
 def get_latent_space_umap(args, folder_dir):
     dataloader_dict = loading_plus_preprocessing_data(args, split_to_train_val=True)
-    umap_model = umap.UMAP(random_state=42, n_components=args['pca_umap_dim_reduction'])
+    umap_model = umap.UMAP(random_state=42, n_components=args['latent_space_dim'])
     umap_results = []
     for index, dataloader in dataloader_dict.items():
         dataset_array = dataloader.dataset.cpu().numpy()
