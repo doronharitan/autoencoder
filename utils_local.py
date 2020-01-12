@@ -225,14 +225,14 @@ def get_latent_space(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mod
     create_folder_if_needed(save_latent_space_folder)
     dataloader_all_data = set_dataloader(dataloader_all_data, args, folder_dir)  # todo extract to a new function the pca option
     #  ====== load the relevant model and predict the latent space =======
+    if (args['dim_reduction_algo'] == 'PCA' or args['dim_reduction_algo'] == 'UMAP')and fc2_mode == False:
+        epoch = 'PCA'
     if model is None:
         # sort the model saved according to checkpoints
         model_list = set_model_list(args['checkpoint_path'], fit_umap_according_to_epoch)
         for model_name in model_list:
             model = load_model(model_name, args)
-            if args['dim_reduction_algo'] == 'PCA' and fc2_mode == False:
-                epoch = 'PCA'
-            else:
+            if epoch != 'PCA' or epoch != 'UMAP':
                 epoch = model_name.split('.pth.tar')[0].split('model_')[1]
             extract_latent_space_prediction(dataloader_all_data,
                                         save_latent_space_folder, fc2_mode, epoch, batch, model)
@@ -296,9 +296,11 @@ def extract_latent_space_prediction(dataloader, save_latent_space_folder,
 def save_latent_space_to_file(latent_space, save_latent_space_folder, epoch='last', method='AE_model', batch=None):
     if batch is None:
         file_path = os.path.join(save_latent_space_folder, 'latent_space_{}.npz'.format(epoch))
+
     else:
         file_path = os.path.join(save_latent_space_folder, 'latent_space_{}_epoch_{}_batch.npz'.format(epoch,
-                                                                                                       batch))  # todo switch to the new format '{} {}'.format('one', 'two')
+                                                                                                   batch))  # todo switch to the new format '{} {}'.format('one', 'two')
+    create_folder_if_needed(save_latent_space_folder)
     if method == 'PCA' or method == 'UMAP':
         latent_space_array = latent_space
     else:
@@ -338,7 +340,8 @@ def create_video(save_video_path, plot_arrays, fps=5, rgb=True):
                 pbar.update(1)
 
 
-def get_visualize_latent_space_dim_reduction(args, folder_dir, fit_umap_according_to_epoch, images_for_plot=None, model=None, mode=None):
+def get_visualize_latent_space_dim_reduction(args, folder_dir, fit_umap_according_to_epoch, images_for_plot=None,
+                                             model=None, mode=None):
     fc1_mode, fc2_mode = args['extract_latent_space'], args['extract_latent_space_fc2']
     for index, fc_mode in enumerate([fc1_mode, fc2_mode]):
         which_fc = 'fc{}'.format(index + 1)
@@ -553,7 +556,7 @@ def fit_umap(latent_space_dir, folder_dir, which_fc, latent_space_file_name, fit
     else:
         latent_space_matrix = load_npz_file(latent_space_dir, latent_space_file_name,
                                             mode='fit')
-        umap_model = umap.UMAP(random_state=56, n_components=2).fit(latent_space_matrix)
+        umap_model = umap.UMAP(random_state=36, n_components=2).fit(latent_space_matrix)
         joblib.dump(umap_model, os.path.join(umap_fit_models_folder_dir, model_name))
         if fit_umap_according_to_epoch == 'fit to alternative latent space':
             get_umap_embedding_alternative_umap(latent_space_matrix, umap_model, folder_dir, which_fc)

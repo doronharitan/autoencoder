@@ -32,8 +32,8 @@ def main():
         create_folder_if_needed(save_video_path)
         if image_arrays_name != 'Umap':
             images_dict[image_arrays_name] = images_dict[image_arrays_name].squeeze(1).numpy()
-            create_video(os.path.join(save_video_path, '{}.mp4'.format(image_arrays_name)),
-                         images_dict[image_arrays_name], fps=60, rgb=False)
+            # create_video(os.path.join(save_video_path, '{}.mp4'.format(image_arrays_name)),
+            #              images_dict[image_arrays_name], fps=60, rgb=False)
         else:
             get_visualize_latent_space_dim_reduction(args, folder_dir,
                 'fit to alternative latent space',  images_for_plot=images_dict['AE_output_images'],

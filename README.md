@@ -248,7 +248,7 @@ To assess what specific elements from the image were learned and represented in 
   that the network learned to mapped it to the real arena shape and used this element as an important 
   feature to encode the image data.
   
-##### PCA/UMAP as encoder results
+#### PCA/UMAP as encoder results
 In the autoencoder we extract the features embedding using learned convolotinal layers. meaning
 the network learns to extract the features that are important for the task, in this case, the 
 feature that would enable the reconstructions of the image without it's noise. What would happen 
@@ -258,9 +258,17 @@ part in our network would be the decoder? would the decoder be able to learn how
  To test the above I used PCA and UMAP to reduce the dim of the input images and than passed it to a decoder
  with the same architecture as the AE one. For each technique I reduced the features embedding to 16D and 2D.
  
+ <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/pca_umap_results.jpg"></p>
+
  The results are shown here:
  
  
  We can see that ....
 
-##### predict rat boy angle results
+#### predict rat boy angle results
+
+
+
+#future work
+See of rhe FC@ develops with 2,
+see what are the features eacg convtranspose is responsibale for
