@@ -9,10 +9,27 @@ But, with time and curiosity, the project become more about the questions:
     representation? in this case I compared the latent space representation 
     of AE vs direction tagger (predict rat body angle)
 
-# Conclusions
-(#add)
-1. dim of the arena is learned (add video)
+The input of the network is 50X50 gray-scale* images
+ (in my case I trained the network on 50X50X1 images of freely behaving rats in an arena
+ The structure of the arena includes 6 ports where the rat can get food from.
+ Thus, images could capture a rat in the middle space of the arena (the image would not include
+  a ports or walls of the area) and it could capture a rat in a port or in the edges of the arena
+   (the image would include a wall of the area).)
 
+# Conclusions
+1. The latent space that was learned with training represented the dimensionality of the arena
+ the rats were in and the composition of the rat. 
+ For more details [click here](#convolutional-autoencoder-test-results)
+ 
+    The figure below shows how the 2D UMAP of the latent space representation changes with training
+     <p align="center"><img width="300" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2d_UMAP_change_with training.gif"></p>
+2. Using PCA to extract the feature embedding instead of AE encoder will
+ results is similar de-noise images. 
+ For more details [click here](#pcaumap-as-encoder-results)
+3. Objective of the learning affects neural representation, even if the architecture of the network is the same.
+ For more details [click here](#predict-rat-boy-angle-results)
+
+ 
 ## In this git you can find:
 - [Convolutional AutoEncoder](#convolutional-autoencoder) - short explanation on what I did and how I used it 
 - [visualize change of latent space](#visualize-change-of-latent-space) - short explanation on what I did and how I used it 
@@ -287,8 +304,14 @@ Another interesting question that rose during this study was "How the objective 
   architecture of the network is the same. further research is needed in order to conform it. For more details see [future work](#future-work)
   
  
-
-#future work
-See of rhe FC@ develops with 2,
-see what are the features eacg convtranspose is responsibale for
-transfer learning 
+## Future work
+This work only raised more questions about how the objective of the learning
+ affects the latent space neural representation?  
+ 
+ Future work in the subject would include:
+ 1. Transfer learning - train the network to predict the body angle of the rat while using pre-train
+ AE encoder to extract the feature embeddings (we can even change the unfreeze layers and see how it effects the learning)
+ . Would the feature extracted from the images using the AE encoder be enough to predict correctly the body angle of the rat?
+ 2. Examine the space representation of the decoder first FC. is it similar to the latent space of the decoder? how it looks in the 
+ PCA/UMAP as encoder network?
+ 3. Examine what are the features each Transposed convectional layer is responsible for, How much redundancy do we have in the network?
