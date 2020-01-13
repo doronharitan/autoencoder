@@ -22,7 +22,7 @@ The input of the network is 50X50 gray-scale* images
  For more details [click here](#convolutional-autoencoder-test-results)
  
     The figure below shows how the 2D UMAP of the latent space representation changes with training
-     <p align="center"><img width="300" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2d_UMAP_change_with training.gif"></p>
+     <p align="center"><img width="350" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2d_UMAP_change_with training.gif"></p>
 2. Using PCA to extract the feature embedding instead of AE encoder will
  results is similar de-noise images. 
  For more details [click here](#pcaumap-as-encoder-results)
