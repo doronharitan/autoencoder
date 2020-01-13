@@ -278,7 +278,7 @@ Another interesting question that rose during this study was "How the objective 
   After the network was train, I used UMAP to reduce the dimensionality of the latent space 
   (from 16D to 2D) and than I plotted the results (for a reminder how I did it and which script I used [click here](#visualize-change-of-latent-space)).
  I colored the data-points according to the body angle of the rat.
-  <p align="center"><img width="350" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2D_umap_body_angle.png"> </p>
+  <p align="center"><img width="400" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2D_umap_body_angle.png"> </p>
 
  The above results show that the latent space that
   was learned with training represent the circularity of tha angle, Which when we think about it is not suppressing.
