@@ -65,8 +65,5 @@ parser.add_argument('--save_plots_or_only_create_movie',
                     default=False,type=bool, help='in the dim reduction analysis do we want '
                                                   'to save each plot or do we want to create only the video?')
 
-# def create_hp_dict():
-    # RUN_GOAL = 'predict body angle, the same architecture of the ae encoder (conv and fc1) with fc2 that converge to two points'  #
-    # TRAIN_DATA_DIR = r'C:\Users\Doron\Desktop\Autoencoder\train data'  # the directory of the train/test data in colab-  r'./data'
-    # FILE_NAME = 'ims_for_doron.npz'  # The name of the file containing the data , 'rat_aug_db_50pix.npz' / / test_raw_image.npy/ ims_for_doron.npz
+
 
