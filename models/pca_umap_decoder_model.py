@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class DimReductionDecoder(nn.Module):  # Todo change output sizes
+class DimReductionDecoder(nn.Module):
     def __init__(self, latent_space_dim):
         super(DimReductionDecoder, self).__init__()
         # the size of the input is (1,50,50)

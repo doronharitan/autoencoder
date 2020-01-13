@@ -1,4 +1,5 @@
 import json
+import random
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset, random_split
@@ -20,6 +21,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from args import parser
 from models.autoencoder_model import Autoencoder
 from models.pca_umap_decoder_model import DimReductionDecoder
+from models.predict_body_angle_model import Predict_body_angle
+
 
 color_datapoints_according_to_specific_condition_dict = {7: 'Angle of the body',
                                   10: 'distance from the center of the arena',
@@ -31,7 +34,7 @@ color_datapoints_according_to_specific_condition_dict = {7: 'Angle of the body',
 #                                       12: 'Did the rat inserted noise into port'}
 
 
-specific_images_to_plot = [154, 226, 85]
+specific_images_to_plot = [85, 226, 154]
 
 def setting_parameters(use_folder_dir=False, mode=None):
     args = parser.parse_args()
@@ -99,6 +102,28 @@ def loading_plus_preprocessing_data(args, split_to_train_val=False):
     return dataloader_dict
 
 
+def loading_plus_preprocessing_data_with_labels(args, split_to_train_val=False):
+    images = load_plus_scale_images(args)
+    labels_neck_position = np.load(
+        os.path.join(args['train_data_dir'], args['meta_data_file_name']))[:, 2:4]
+    labels_base_position = np.load(
+        os.path.join(args['train_data_dir'], args['meta_data_file_name']))[:, :2]
+    labels = labels_neck_position - labels_base_position
+    dataset = TensorDataset(torch.tensor(images, device=args['device']).float().unsqueeze(1),
+                            torch.tensor(labels, device=args['device']).float())
+    if split_to_train_val:
+        len_train_datase = round(len(dataset) * (1 - args['split_size']))
+        len_data_to_split = [len_train_datase, len(dataset) - len_train_datase]
+        training_dataset, val_dataset = random_split(dataset, len_data_to_split)
+        dataloader_dict = {index: DataLoader(dataset, batch_size=args['batch_size'], shuffle=True)
+                           for index, dataset in enumerate([training_dataset, val_dataset])}
+        return dataloader_dict
+    else:
+        dataloader = DataLoader(dataset, batch_size=args['batch_size_latent_space'],
+                                shuffle=False)
+        return dataloader
+
+
 def load_plus_scale_images(args):
     if '.npy' in  args['file_name']:
         images = np.load(os.path.join(args['train_data_dir'], args['file_name']))
@@ -153,9 +178,15 @@ def test_model(model, test_dataloader, criterion, epoch, save_images_path):
         return val_loss
 
 
-def visualize_output_images(local_images_batch, output, save_images_path, epoch):
-    output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
-    save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
+def visualize_output_images(local_images_batch, output, save_images_path, epoch, local_labels_batch=None):
+    if save_images_path is None:
+        pass
+    else:
+        if local_images_batch.shape[1] > 1:
+            output_img_tensor_to_plot = torch.cat((local_labels_batch[:8], output[:8]))
+        else:
+            output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
+        save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
 
 
 def prediction_step(model, dataset, criterion, labels=None, mode='train'):
@@ -176,14 +207,14 @@ def prediction_step(model, dataset, criterion, labels=None, mode='train'):
 
 def train_model_with_labels(model, dataloader_dict, optimizer, criterion, epoch, save_latent_space, folder_dir,
                             checkpoint_latent_space_interval):
-    train_loss, loss_reg = 0.0, 0.0
+    train_loss = 0.0
     train_dataloader = dataloader_dict[0]
     if save_latent_space:
         save_latent_space_every_batches = len(train_dataloader) // checkpoint_latent_space_interval
     for num_batch, (local_images_batch, local_labels_batch) in enumerate(train_dataloader):
         model.train()
         optimizer.zero_grad()                   # clear the gradients of all optimized variables
-        loss, __ = prediction_step(model, local_images_batch, criterion, labels=local_labels_batch)
+        loss, __  = prediction_step(model, local_images_batch, criterion, labels=local_labels_batch)
         train_loss += loss.item()
         loss.backward()                         # compute the gradients
         optimizer.step()                        # update the weights with the gradients
@@ -206,11 +237,7 @@ def test_model_with_labels(model, test_dataloader, criterion, epoch, save_images
             original_images += [local_labels_batch.detach().cpu()]
         val_loss += loss.item()
     # ====== Visualize the output images ======
-    if local_images_batch.shape[1] > 1:
-        output_img_tensor_to_plot = torch.cat((local_labels_batch[:8], output[:8]))
-    else:
-        output_img_tensor_to_plot = torch.cat((local_images_batch[:8], output[:8]))
-    save_image(output_img_tensor_to_plot, os.path.join(save_images_path, '{}_epoch.png'.format(epoch)))
+    visualize_output_images(local_images_batch, output, save_images_path, epoch, local_labels_batch)
     # ====== if test mode return images and output else return only loss======
     if epoch == 'test':
         return val_loss, torch.cat(original_images), torch.cat(output_images)
@@ -218,15 +245,15 @@ def test_model_with_labels(model, test_dataloader, criterion, epoch, save_images
         return val_loss
 
 
-
 def get_latent_space(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mode=False, model=None,
                         epoch='test', batch=None, dataloader_all_data=None):
     save_latent_space_folder = os.path.join(folder_dir, 'Latent_space_arrays_{}'. format('fc2' if fc2_mode else 'fc1'))
     create_folder_if_needed(save_latent_space_folder)
-    dataloader_all_data = set_dataloader(dataloader_all_data, args, folder_dir)  # todo extract to a new function the pca option
+    dataloader_all_data = set_dataloader(dataloader_all_data, args, folder_dir)
     #  ====== load the relevant model and predict the latent space =======
-    if (args['dim_reduction_algo'] == 'PCA' or args['dim_reduction_algo'] == 'UMAP')and fc2_mode == False:
-        epoch = 'PCA'
+    if args is not None:
+        if (args['dim_reduction_algo'] == 'PCA' or args['dim_reduction_algo'] == 'UMAP')and fc2_mode == False:
+            epoch = 'PCA'
     if model is None:
         # sort the model saved according to checkpoints
         model_list = set_model_list(args['checkpoint_path'], fit_umap_according_to_epoch)
@@ -243,7 +270,9 @@ def get_latent_space(args, folder_dir, fit_umap_according_to_epoch=None, fc2_mod
 
 
 def set_dataloader(dataloader_all_data, args, folder_dir):
-    if args['dim_reduction_algo'] == 'PCA':
+    if args is None and dataloader_all_data is not None:
+        dataloader = dataloader_all_data
+    elif args['dim_reduction_algo'] == 'PCA':
         dataset = load_npz_file(os.path.join(folder_dir, 'Latent_space_arrays_fc1'), 'latent_space_PCA.npz', mode='transform')
         dataloader = DataLoader(torch.tensor(dataset).to(args['device']),
                                 batch_size=args['batch_size_latent_space'], shuffle=False)
@@ -266,11 +295,12 @@ def set_model_list(checkpoint_path, fit_umap_according_to_epoch):
 def load_model(model_name, args):
     # ==== set the model according latnet space encoder options - 'PCA', 'UMAP' or 'AE encoder'========
     checkpoint = torch.load(os.path.join(args['checkpoint_path'], model_name))
-    # if checkpoint['model_name'] != 'Autoencoder':
-    if args['dim_reduction_algo'] == 'PCA' or args['dim_reduction_algo'] == 'UMAP':
-        model = DimReductionDecoder(args['latent_space_dim']).to(args['device'])
-    else:
+    if checkpoint['model_name'] == 'Autoencoder':
         model = Autoencoder(args['latent_space_dim']).to(args['device'])
+    elif checkpoint['model_name'] == 'DimReductionDecoder':
+        model = DimReductionDecoder(args['latent_space_dim']).to(args['device'])
+    elif checkpoint['model_name'] == 'Predict_body_angle':
+        model = Predict_body_angle(args['latent_space_dim']).to(args['device'])
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
@@ -286,11 +316,18 @@ def extract_latent_space_prediction(dataloader, save_latent_space_folder,
         # ====== move model to eval mode with no grads and predict the latent space ======
         model.eval()
         latent_space_arrays = []
-        with torch.no_grad():
-            for local_images_batch in dataloader:
-                latent_space = model.forward_latent_space(local_images_batch, fc2_mode)
-                latent_space_arrays += [latent_space.detach().cpu()]
-            save_latent_space_to_file(latent_space_arrays, save_latent_space_folder, epoch, batch=batch)
+        if model._get_name() == 'Predict_body_angle' and epoch != 'test':
+            with torch.no_grad():
+                for local_images_batch, local_labels_batch in dataloader:
+                    latent_space = model.forward_latent_space(local_images_batch, fc2_mode)
+                    latent_space_arrays += [latent_space.detach().cpu()]
+                save_latent_space_to_file(latent_space_arrays, save_latent_space_folder, epoch, batch=batch)
+        else:
+            with torch.no_grad():
+                for local_images_batch in dataloader:
+                    latent_space = model.forward_latent_space(local_images_batch, fc2_mode)
+                    latent_space_arrays += [latent_space.detach().cpu()]
+                save_latent_space_to_file(latent_space_arrays, save_latent_space_folder, epoch, batch=batch)
 
 
 def save_latent_space_to_file(latent_space, save_latent_space_folder, epoch='last', method='AE_model', batch=None):
@@ -299,7 +336,7 @@ def save_latent_space_to_file(latent_space, save_latent_space_folder, epoch='las
 
     else:
         file_path = os.path.join(save_latent_space_folder, 'latent_space_{}_epoch_{}_batch.npz'.format(epoch,
-                                                                                                   batch))  # todo switch to the new format '{} {}'.format('one', 'two')
+                                                                                                   batch))
     create_folder_if_needed(save_latent_space_folder)
     if method == 'PCA' or method == 'UMAP':
         latent_space_array = latent_space
@@ -319,7 +356,7 @@ def create_video(save_video_path, plot_arrays, fps=5, rgb=True):
     if 'Original_and_AE_output_images' in save_video_path:
         h_fig = plt.figure(figsize=(8, 4))
     else:
-        h_fig = plt.figure(figsize=(4, 4))  # todo change back to 8,8?
+        h_fig = plt.figure(figsize=(4, 4))
     h_ax = h_fig.add_axes([0.0, 0.0, 1.0, 1.0])
     h_ax.set_axis_off()
     if rgb:
@@ -450,9 +487,9 @@ def visualize_umap_embeddings(args, folder_dir, which_fc,
 
 
 def plot_umap_embedding(axis_limits, dim_reduction_results, color_array, cmap, dots_to_plot_line, images_to_plot,
-                        images_to_plot_dim_reduction, save_video_path, save_plots, save_plots_path):  # todo expand it also to 3D
+                        images_to_plot_dim_reduction, save_video_path, save_plots, save_plots_path):
     # ====== set and create if needed the folder where we will save the videos ======
-    h_fig = plt.figure(figsize=(7, 8))  # todo see how I can save the plots while doing the movie
+    h_fig = plt.figure(figsize=(7, 8))
     # ====== plot the umap =======
     h_ax_1 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2], y_max=axis_limits[3])
     h_im_1 = h_ax_1.scatter(dim_reduction_results[-1][:, 0], dim_reduction_results[-1][:, 1],
@@ -469,22 +506,22 @@ def plot_umap_embedding(axis_limits, dim_reduction_results, color_array, cmap, d
                     scalarMap.to_rgba(color_array[specific_images_to_plot[1]]),
                     scalarMap.to_rgba(color_array[specific_images_to_plot[2]])]
     # ====== plot each circle above and each image, will be done only once=======
-    # for i in range(3):
-    #     h_ax = set_axis(h_fig, 'rat_image_{}'.format(i + 1))
-    #     circle_image = plt.Circle((25, -4), 2, color=color_circle[i], clip_on=False)
-    #     h_ax.add_artist(circle_image)
-    #     h_ax.matshow(images_to_plot[i], cmap='gray')
+    for i in range(3):
+        h_ax = set_axis(h_fig, 'rat_image_{}'.format(i + 1))
+        circle_image = plt.Circle((25, -4), 2, color=color_circle[i], clip_on=False)
+        h_ax.add_artist(circle_image)
+        h_ax.matshow(images_to_plot[i], cmap='gray')
     # ===== plots lines from mini figure to the images on the side ======
-    # h_ax_2 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2],
-    #                   y_max=axis_limits[3])
-    # h_line_dict = {
-    #     i: h_ax_2.plot(dots_to_plot_line[-1][:, 0:2][i], dots_to_plot_line[-1][:, 2:4][i], alpha=0.5, c='gray')[0]
-    #     for i in range(3)}
+    h_ax_2 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2],
+                      y_max=axis_limits[3])
+    h_line_dict = {
+        i: h_ax_2.plot(dots_to_plot_line[-1][:, 0:2][i], dots_to_plot_line[-1][:, 2:4][i], alpha=0.5, c='gray')[0]
+        for i in range(3)}
     # ====== plot specific images dim reduction dots=======
-    # h_ax_3 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2], y_max=axis_limits[3])
-    # h_im_2 = h_ax_3.scatter(images_to_plot_dim_reduction[-1][:, 0], images_to_plot_dim_reduction[-1][:, 1],
-    #                         s=50,
-    #                         c=color_circle, edgecolors='black')
+    h_ax_3 = set_axis(h_fig, 'umap', x_min=axis_limits[0], x_max=axis_limits[1], y_min=axis_limits[2], y_max=axis_limits[3])
+    h_im_2 = h_ax_3.scatter(images_to_plot_dim_reduction[-1][:, 0], images_to_plot_dim_reduction[-1][:, 1],
+                            s=50,
+                            c=color_circle, edgecolors='black')
 
     if len(dots_to_plot_line) == 1:
         plt.savefig(save_video_path, dpi=300)
@@ -693,7 +730,7 @@ def extract_images_to_plot(save_folder_dir, args, folder_dir):
     return predicted_images.squeeze(1)
 
 
-def calculate_max_min_axis(array_to_boundaries_on):  # todo expand to 3D
+def calculate_max_min_axis(array_to_boundaries_on):
     if type(array_to_boundaries_on) == list:
         array_to_boundaries_on = np.array(array_to_boundaries_on)
         max_axis = array_to_boundaries_on.max(axis=1).max(axis=0)
@@ -766,7 +803,7 @@ def save_latent_space_into_file(args, model, folder_dir, method):
 
 
 def extract_pca_data_to_file(folder_dir, variance, var_explained_by_dim,
-                             n_components_95):  # todo fix, where do we use it?
+                             n_components_95):
     file_path = os.path.join(folder_dir, 'pca_data.txt')
     plot_pca_var_per_componets(var_explained_by_dim, folder_dir)
     n_componets_array = np.arange(len(variance))
@@ -826,3 +863,36 @@ def get_latent_space_pca_umap_test_mode(args, folder_dir):
     dataloader = DataLoader(dataset, batch_size=args['batch_size'], shuffle=True)
     # ===== save the UMAP latent space into a file =====
     return dataloader
+
+
+def plot_labels_vs_predictions_on_arena(original_position, predicted_points, folder_dir, epoch='last'):
+    image_save_dir = os.path.join(folder_dir, 'Images')
+    create_folder_if_needed(image_save_dir)
+    # ====== calculate the arena diameter =======
+    arena_diameter_from_labels = original_position.max(axis=0)
+    # normalize the positions
+    original_position_norm = original_position / arena_diameter_from_labels  # normalize to 1
+    predicted_points_norm = predicted_points / arena_diameter_from_labels
+    # ====== plot label vs predicted on the arena ======
+    # ====== plot on only part of the data, choose randomly on which ======
+    k = 25 if len(original_position) >= 25 else len(original_position) < 25
+    random_indexes = random.choices(np.arange(len(original_position_norm)), k=k)
+    with tqdm(total=len(random_indexes)) as pbar:
+        n_rows = 5 if k == 25 else round(math.sqrt(k))
+        n_cols = n_rows
+        fig, ax = plt.subplots(nrows=n_rows, ncols=n_cols, sharex=True, sharey=True)
+        fig.suptitle('labels_vs_predictions_on_arena')
+        for row in range(n_rows):
+            for col in range(n_cols):
+                circle = plt.Circle((0, 0), 1, alpha=0.5, color='black')
+                ax[row, col].add_artist(circle)
+                ax[row, col].set_xlim(-1.05, 1.05)
+                ax[row, col].set_ylim(-1.05, 1.05)
+                ax[row, col].scatter(original_position_norm[row * n_cols + col][0],
+                                     original_position_norm[row * n_cols + col][1], color='red', s=5)
+                ax[row, col].scatter(predicted_points_norm[row * n_cols + col][0],
+                                     predicted_points_norm[row * n_cols + col][1], color='blue', s=5)
+                plt.xticks([])
+                plt.yticks([])
+                pbar.update(1)
+    plt.savefig(os.path.join(image_save_dir, 'labels_vs_predictions_on_arena_{}_epoch.png'.format(epoch)), dpi=300)

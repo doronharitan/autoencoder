@@ -33,13 +33,13 @@ parser.add_argument('--save_model_checkpoints', default=True, type=bool,
                     help='should we save the model checkpoints during the run')
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints')
 parser.add_argument('--save_latent_space', default=True, type=bool,
-                    help='Should we save the latent space during the run?') #todo make sure it is used correctly
-parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\Autoencoder\ae_model\model check points',
+                    help='Should we save the latent space during the run?')
+parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\predict_body_angle\model check points',
                     type=str, help='Optional path to checkpoint model')
-parser.add_argument('--checkpoint_to_load', default='model_120_epoch.pth.tar',
+parser.add_argument('--checkpoint_to_load', default='model_35_epoch.pth.tar',
                     type=str, help='The name of the model we want to load')
 parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
-                    help='Interval between saving latent_space checkpoints') #todo make sure it is used correctly
+                    help='Interval between saving latent_space checkpoints')
 parser.add_argument('--val_check_interval', default=5, type=int, help='Interval between running validation test')
 parser.add_argument('--load_checkpoint', default=False, type=bool,
                     help='Loading a checkpoint and continue training with it')
@@ -65,48 +65,8 @@ parser.add_argument('--save_plots_or_only_create_movie',
                     default=False,type=bool, help='in the dim reduction analysis do we want '
                                                   'to save each plot or do we want to create only the video?')
 
-# def create_hp_dict():  # todo seprate it to which area in the code it is used
+# def create_hp_dict():
     # RUN_GOAL = 'predict body angle, the same architecture of the ae encoder (conv and fc1) with fc2 that converge to two points'  #
     # TRAIN_DATA_DIR = r'C:\Users\Doron\Desktop\Autoencoder\train data'  # the directory of the train/test data in colab-  r'./data'
     # FILE_NAME = 'ims_for_doron.npz'  # The name of the file containing the data , 'rat_aug_db_50pix.npz' / / test_raw_image.npy/ ims_for_doron.npz
-    # BATCH_SIZE = 64  # 'mini-batch size, for the network 64 for prediction 1024 #todo add batch size for the evaluation step
-    # BATCH_SIZE_LATENT_SPACE = 1112
-    # SEED = 42  #
-    # VAL_SPLIT = 0.2  # the split of train and val
-    # NUM_EPOCHS = 150  # number of total epochs
-    # LR = 1e-3  # initial learning rate
-    # OPEN_NEW_FOLDER_STATUS = 'True'  # open a new folder for saving the run info, if false the info would be saved in the project dir, if debug the info would be saved in debug folder(default:True)
-    # MAX_PIX_VALUE = 255.0  # max pixel value, would be used for the rescaling of the images
-    # LATENT_SPACE_DIM = 16  # 3
-    # VAL_CHECK_INTERVAL = 5  # Epochs interval between running validation test
-    # DIR_MODEL = r'D:\Autoencoder\predict body angle\model check points'
-    # META_DATA_FILE_NAME = 'mdata_for_mami.npy'
-    # DIM_REDUCTION_ALGO = 'UMAP'
-    # EXTRACT_LATENT_SPACE = True
-    # EXTRACT_LATENT_SPACE_FC2 = False
-    # #RUN_VISUALIZATION_ON_DIM_REDUCTION = True
-    # #GET_LATENT_SPACE_METHOD = 'AE_model'  # 'PCA'/ AE_model / UMAP/ PCA_decoder #todo what is the diff between this and encoder mode?
-    # #PCA_DIM_REDUCTION = 2
-    # UMAP_DIM_REDUCTION_FIT_ACCORDING_TO_SPECIFIC_EPOCH = 'last'  # options 'every_epoch', 'first', 'last', fit to alternative latent space  #Todo make sure it works
-    # RUN_ALL_UMAP_DIM_REDUCTION_OPTIONS = False
-    # SAVE_LATENT_SPACE = True  # would save the latents space every 3
-    # ALTERNATIVE_LATENT_SPACE_TO_FIT = r'./SOTA - 16D, alex data, save latent space for batch/Latent_space_arrays_fc1'
-    # #SAVE_PLOTS = False
 
-    # hp_parameters = {'train_data_dir': TRAIN_DATA_DIR, 'file_name': FILE_NAME,
-    #                  'batch_size': BATCH_SIZE, 'seed': SEED, 'val_split': VAL_SPLIT,
-    #                  'num_epochs': NUM_EPOCHS, 'lr': LR, 'open_new_folder_status': OPEN_NEW_FOLDER_STATUS,
-    #                  'max_pix_value': MAX_PIX_VALUE,
-    #                  'latent_space_dim': LATENT_SPACE_DIM, 'val_check_interval': VAL_CHECK_INTERVAL,
-    #                  'run_goal': RUN_GOAL, 'dir_model': DIR_MODEL,
-    #                  'dim_reduction_algo': DIM_REDUCTION_ALGO, 'extract_latent_space': EXTRACT_LATENT_SPACE,
-    #                  'meta_data_file_name': META_DATA_FILE_NAME,
-    #                  'run_visualization_on_dim_reduction': RUN_VISUALIZATION_ON_DIM_REDUCTION,
-    #                  'get_latent_space_method': GET_LATENT_SPACE_METHOD, 'pca_dim_reduction': PCA_DIM_REDUCTION,
-    #                  'umap_dim_reduction_fit_according_to_specific_epoch': UMAP_DIM_REDUCTION_FIT_ACCORDING_TO_SPECIFIC_EPOCH,
-    #                  'run_all_umap_dim_reduction_options': RUN_ALL_UMAP_DIM_REDUCTION_OPTIONS,
-    #                  'save_latent_space': SAVE_LATENT_SPACE,
-    #                  'extract_latent_space_fc2': EXTRACT_LATENT_SPACE_FC2,
-    #                  'batch_size_latent_space': BATCH_SIZE_LATENT_SPACE,
-    #                  'alternative_latent_space_to_fit': ALTERNATIVE_LATENT_SPACE_TO_FIT, 'save_plots': SAVE_PLOTS}
-    # return hp_parameters

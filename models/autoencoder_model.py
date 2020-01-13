@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class Autoencoder(nn.Module):  # Todo change output sizes
+class Autoencoder(nn.Module):
     def __init__(self, latent_space_dim):
         super(Autoencoder, self).__init__()
         # the size of the input is (1,50,50)

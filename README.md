@@ -78,9 +78,7 @@ This network was used in order to address the 2nd question " If we create the la
 ## Predict rat body angle
 A network which uses feature embeddings (AKA the latent representation) that were extracted from images
  by an encoder to predict what is the body angle of the rat in the image
- For extracting the images embeddings I used:
-  1. An encoder with the same architecture as the AE encoder.
-  2. pre-trained AE encoder (trained on the de-noise task) with different depth of unfreezing layers 
+ For extracting the images embeddings I used An encoder with the same architecture as the AE encoder.
   
  The network architecture:
   <p align="center"><img width="600" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
@@ -249,26 +247,48 @@ To assess what specific elements from the image were learned and represented in 
   feature to encode the image data.
   
 #### PCA/UMAP as encoder results
-In the autoencoder we extract the features embedding using learned convolotinal layers. meaning
+In the autoencoder we extract the features embedding using learned convolotinal layers. Meaning
 the network learns to extract the features that are important for the task, in this case, the 
-feature that would enable the reconstructions of the image without it's noise. What would happen 
-if I would create the features embedding using dim reduction techniques, so the only learned 
-part in our network would be the decoder? would the decoder be able to learn how to decode
- the de-noise images from features embedding?
- To test the above I used PCA and UMAP to reduce the dim of the input images and than passed it to a decoder
- with the same architecture as the AE one. For each technique I reduced the features embedding to 16D and 2D.
+feature that would enable the reconstructions of the image without it's noise. 
+What would happen if I would extracte the features embedding using dim reduction techniques,
+ so the only learned part in our network would be the decoder? would the decoder be able to learn
+  how to decode the de-noise images from this features embedding?
+  
+ To test the above I used PCA and UMAP to reduce the dim of the input images and than passed it
+  to a decoder with the same architecture as the AE one.
+   For each technique I extracted 16D (The latent space dim extracted by the AE encoder)
+    and 2D features embedding.
  
  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/pca_umap_results.jpg"></p>
 
- The results are shown here:
+ The only technique that reach similar results as the AE encoder was the PCA dim reduction to 16D. 
+ The PCA feature embedding in this case explained ~55% of the dataset variance. We can see that the 
+ only feature the network didn't learn to reconstruct correctly was the tail of the rat. The 2D UMAP 
+ latent space representation also looked similar to the one we get from the ae encoder latent space. The 
+ difference in this case  is express in the 6 port representation around the arena which in this case are less clear and 
+ less structured.
  
- 
- We can see that ....
 
 #### predict rat boy angle results
+Another interesting question that rose during this study was "How the objective of the learning
+ affects the latent space neural representation?". To question this I change the objective of the
+  AE encoder. So, The aim of the network would be to predict the body angle of the rat 
+  (for more details [click here](#predict-rat-body-angle)).
+  
+  After the network was train, I used UMAP to reduce the dimensionality of the latent space 
+  (from 16D to 2D) and than I plotted the results (for a reminder how I did it and which script I used [click here](#visualize-change-of-latent-space)).
+ I colored the data-points according to the body angle of the rat.
+  <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2D_umap_body_angle.png"> 
 
-
+ The above results show that the latent space that
+  was learned with training represent the circularity of tha angle, Which when we think about it is not suppressing.
+  This results, indicates that the objective of the learning
+ affects the latent space neural representation even if the
+  architecture of the network is the same. further research is needed in order to conform it. For more details see [future work](#future-work)
+  
+ 
 
 #future work
 See of rhe FC@ develops with 2,
 see what are the features eacg convtranspose is responsibale for
+transfer learning 
