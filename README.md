@@ -42,7 +42,7 @@ The objective function is L2 distance between the input and output images.
 
 ###  Convolutional autoencoder denoises grayscale images.
 A video showing a stack of sample images from the test dataset before the de-noise and after is seen below: 
-<p align="center"><img width="400" height="200" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+<p align="center"><img width="300" height="150" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
 From the comparison above we can learn that the autoencoder was able to denoise the images. 
 
 Note: the dataset noise comes from the imaging system and not syntactically introduced.
