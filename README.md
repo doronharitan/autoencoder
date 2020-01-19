@@ -60,8 +60,8 @@ that the latent space embeds this feature in its representation.
 The features I colored  were: 
  1. The body angle of the rat (Fig A)
  2. The distance of the rat from the arena center (Fig B).
-      <p align="center"><img width="360" height="310" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="340" height="310" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+      <p align="center"><img width="355" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="330" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
 
   The 2D point cloud is shaped in a circular structure with 6 elements that comes out form the circle. This spatial
    arrangements correlates with the arena geometry. 
@@ -75,7 +75,7 @@ The new model contains two parts:
 2.	Decoder – identical to the AE decoder.
 
  The network architecture:
-   <p align="center"><img width="650" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
+   <p align="center"><img width="650" height="240" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
 
 For each technique I embedded all the images in 16D or 2D.
 
@@ -95,7 +95,7 @@ The whole architecture of the direction tagger is identical to the AE encoder
 Its objective function is a regression to body direction (with the L2 metric)
   
  The network architecture:
-  <p align="center"><img width="600" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
+  <p align="center"><img width="500" height="190" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
 
  After the direction tagger was trained, I used UMAP to reduce the dimensionality of the last hidden
   layer which is analogous to the latent space of the AE.
@@ -112,4 +112,4 @@ This can be explained by the difference of the objective functions:
 While the direction tagger was trained to predict only the body angle of the rat, 
 the AE was trained to reconstruct the whole image, and thus embedded all its major
  features (rat body angle and distance from center, arena ports).
-  <p align="center"><img width="500" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_vs_AE.jpg"> </p>
+  <p align="center"><img width="700" height="350" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_vs_AE.jpg"> </p>
