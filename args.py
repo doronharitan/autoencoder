@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Convolutional AutoEncoder for image noise reduction')
 parser.add_argument('--run_goal', default='', type=str,
                     help='What is the goal of the run, Would be saved in the setting information for each run')
-parser.add_argument('--train_data_dir', default=r'C:\Users\Doron\Desktop\Autoencoder\train data',
+parser.add_argument('--train_data_dir', default=r'D:\Autoencoder\train data',
                     type=str, help='The directory of the train/test data')
 parser.add_argument('--meta_data_file_name', default='mdata_for_mami.npy',
                     type=str, help='The name of the meta data file (located in the train data dir)')
@@ -34,9 +34,9 @@ parser.add_argument('--save_model_checkpoints', default=True, type=bool,
 parser.add_argument('--checkpoint_interval', default=5, type=int, help='Interval between saving model checkpoints')
 parser.add_argument('--save_latent_space', default=True, type=bool,
                     help='Should we save the latent space during the run?')
-parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\predict_body_angle\model check points',
+parser.add_argument('--checkpoint_path', default=r'C:\Users\Doron\PycharmProjects\autoencoder\20200119-132746\model check points',
                     type=str, help='Optional path to checkpoint model')
-parser.add_argument('--checkpoint_to_load', default='model_35_epoch.pth.tar',
+parser.add_argument('--checkpoint_to_load', default='model_25_epoch.pth.tar',
                     type=str, help='The name of the model we want to load')
 parser.add_argument('--checkpoint_latent_space_interval', default=3, type=int,
                     help='Interval between saving latent_space checkpoints')

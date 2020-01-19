@@ -1,317 +1,115 @@
-# Objective of the learning affects neural representation
-Originally this project was suppose to be only about PyTorch implementation of deep Convolutional AutoEncoder for 
-de-noise images and data compression.
-But, with time and curiosity, the project become more about the questions: 
- 1. What is encoded in the AE latent space? 
- 2. If we create the latent space that would be used as the input of the decoder by using dimension (dim) reduction techniques 
- (like UMAP or PCA), would the decoder be able to decode de-noise images from it?
-   3. How the objective of the learning affects the latent space neural
-    representation? in this case I compared the latent space representation 
-    of AE vs direction tagger (predict rat body angle)
+# Denoising grayscale images with convolutional autoencoder and study its neural representations
+First part of this work implements deep Convolutional Autoencoder in PyTorch for image denoising.
+The second part studies the neural representation of the autoencoder encoder
+last latent space, and its development along the training.
 
-The input of the network is 50X50 gray-scale* images
- (in my case I trained the network on 50X50X1 images of freely behaving rats in an arena
- The structure of the arena includes 6 ports where the rat can get food from.
- Thus, images could capture a rat in the middle space of the arena (the image would not include
-  a ports or walls of the area) and it could capture a rat in a port or in the edges of the arena
-   (the image would include a wall of the area).)
+50X50 grayscale images were used as the dataset. The images describe a rat running in a 
+round arena with 6 ports around the walls. Each frame is labeled with multiple features:
+ Location of the rat, the direction of its torso, its distance to the center of the arena.
 
-# Conclusions
-1. The latent space that was learned with training represented the dimensionality of the arena
- the rats were in and the composition of the rat. 
- For more details [click here](#convolutional-autoencoder-test-results)
+# Tl;dr
+1. Convolutional autoencoder successfully denoise grayscale images.
+2. The last latent space of the autoencoder encoder encodes the structure of the arena 
+and the features of the rat.
+3. The encoding development can be studies by the UMAP dimensionality reduction algorithm.
  
-    The figure below shows how the 2D UMAP of the latent space representation changes with training
-     <p align="center"><img width="350" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2d_UMAP_change_with training.gif"></p>
-2. Using PCA to extract the feature embedding instead of AE encoder will
- results is similar de-noise images. 
- For more details [click here](#pcaumap-as-encoder-results)
-3. Objective of the learning affects neural representation, even if the architecture of the network is the same.
- For more details [click here](#predict-rat-boy-angle-results)
+   The figure below shows how the 2D UMAP of the latent space representation changes with training
+    <p align="center"><img width="350" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2d_UMAP_change_with training.gif"></p>
+4. I replaced the encoder by a PCA and trained a decoder on the resulting low dimensional features.
+The performance was unaffected while the training time reduced by half.
+5. Objective of the learning affects neural representation of the latent space, 
+even if the architecture of the network is the same.
 
  
-## In this git you can find:
+## Table of content:
+- Installation instructions and technical information hoe to run the scripts can be found in the file ['Installation_Readme.md'](https://github.com/doronharitan/autoencoder/blob/master/Installation_Readme.md)
 - [Convolutional AutoEncoder](#convolutional-autoencoder) - short explanation on what I did and how I used it 
-- [visualize change of latent space](#visualize-change-of-latent-space) - short explanation on what I did and how I used it 
-- [PCA/UMAP as encoder](#pcaumap-as-encoder) - short explanation on what I did and how I used it 
-- [Predict rat body angle](#predict-rat-body-angle) - short explanation on what I did and how I used it 
-- [Installation](#installation) instructions
-- [Dataset requirement](#dataset-requirement)
-- How to run the [Train and test modes](#train-and-test-modes) instructions
-- How to run the [visualize change of latent space run mode](#visualize-change-of-latent-space-mode) instructions 
-- [Results](#results) of my project
+- [Convolutional autoencoder denoises grayscale images.](#convolutional-autoencoder-denoises-grayscale-images) 
+- [The last latent space of the autoencoder encoder encodes the structure 
+of the arena  and the features of the rat.](#the-last-latent-space-of-the-autoencoder-encoder-encodes-the-structure-of-the-arena--and-the-features-of-the-rat)
+- [Replacing the encoder part by non-convolutional dimensionality reduction techniques](#replacing-the-encoder-part-by-non-convolutional-dimensionality-reduction-techniques) of my project
+-[How the objective of the learning affects the latent space neural Representation](#how-the-objective-of-the-learning-affects-the-latent-space-neural-representation)
 
 ## Convolutional AutoEncoder
- The AE (AutoEncoder) network uses feature embeddings (AKA the latent representation) that were extracted from images by an encoder to reconstruct an image without it's noise.
- In the following network I utilized convolutional  and max-pooling layers, followed by a flattening and fully connected layer to encode the image in a reduced-dimensional space.
- For decoding, I used the inverse operations. I utilized fully connected layer followed by transposed convolutional layers to decode the image to it's original space.    
+  The AE (Autoencoder) model contains two parts: 
+1.	An encoder that reduces the dimensionality of the input to a low-dimensional latent space (in my model its 16D).I refer to this latent space later on by the term ‘latent space’. I used convolutional and max-pooling layers, followed by a fully connected layer. 
+2.	A decoder that reconstructs the image to its original dimensions. I used fully
+ connected layer followed by transposed convolutional layers. 
+The objective function is L2 distance between the input and output images.
 
  The network architecture:
   <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/ae_network.jpg"></p>
 
-The input of the network is 50X50 gray-scale* images (in my case I trained the network on 50X50X1 images of freely behaving rats)
+###  Convolutional autoencoder denoises grayscale images.
+A video showing a stack of sample images from the test dataset before the de-noise and after is seen below: 
+<p align="center"><img width="400" height="200" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
+From the comparison above we can learn that the autoencoder was able to denoise the images. 
 
-*default settings, can be change by setting params in the AE network.
+Note: the dataset noise comes from the imaging system and not syntactically introduced.
 
-## visualize change of latent space
-In order to answer the first question "What is encoded in the AE latent space?", I built a script 
-(called visualize_change_of_latent_space.py) 
-which uses UMAP to reduce the dimensionality of the latent space to 2D (from 16D) and enables
- to visualize the latent space embeddings.
- 
- The visualization make it easier to investigate the topological properties of the 
- latent space embeddings. Together with coloring the data-points according to specific condition
-, for example the body angle of the rat, we can learn if the networks 
-learns to code in the latent space specific elements from the environment or the rat composition in the image. 
+### The last latent space of the autoencoder encoder encodes the structure of the arena  and the features of the rat.
+I was curious to learn **what is encoded in the AE latent space**? 
+   
+To address this question, I transformed all the images to a latent space using 
+the encoder. 
+In order to visualize the resulting latent space I reduced its dimension from 16D to 2D using Uniform Manifold Approximation and Projection
+([UMAP](https://umap-learn.readthedocs.io/en/latest/)).
+I colored the 2D data-points according to a single feature of the dataset, 
+such as the body angle of the rat (Fig A). If the points are cluster by color or arranged in a color gradient it suggests 
+that the latent space embeds this feature in its representation.
+The features I colored  were: 
+ 1. The body angle of the rat (Fig A)
+ 2. The distance of the rat from the arena center (Fig B).
+      <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="330" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
 
-The above script enables to fit a UMAP to the desired latent space and than transform a number of 
-chosen latent spaces to this UMAP model. For example, This is used in order to visualise the change in 
-the latent space representation with the training of the AE model. 
-In this case we fit the UMAP to the last latent space saved in the training mode and transformed each 
-latent space (saved form epoch zero till the end of the training) to this model. The result can be seen here (*add link) 
+  The 2D point cloud is shaped in a circular structure with 6 elements that comes out form the circle. This spatial
+   arrangements correlates with the arena geometry. 
+   
+   The color gradients and cluster in the plots suggests that the distance of the rat form the center of the arena and 
+   its body angle are embedded in the latent space. 
 
-The options to fit the UMAP model to are:
-1. 'last' - last saved latent space 
-2. 'first' - first saved latent space (epoch 0)
-3. 'alternative latent space' - meaning a latent space that you provide and is not necessarily from this run.
-4. 'all epochs' - fit and transform every latent space to it self
-4. 'All'
-
-## PCA/UMAP as encoder
-The network uses feature embeddings (AKA the latent representation) that were extracted from images by dim
- reduction techniques, Principal component analysis (PCA) or 
- Uniform Manifold Approximation and Projection (UMAP), to reconstruct (decode) an image without it's noise.
- For decoding, I used the same architecture as the AE decoder.
+### Replacing the encoder part by non-convolutional dimensionality reduction techniques.
+The new model contains two parts:
+1.	Dimensionality reduction by UMAP/PCA (Principal component analysis).
+2.	Decoder – identical to the AE decoder.
 
  The network architecture:
-  <p align="center"><img width="650" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
+   <p align="center"><img width="650" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
 
-The input of the network is the same as for the AE network.
-This network was used in order to address the 2nd question " If we create the latent space that would be used as the input of the decoder by using dimension (dim) reduction techniques 
- (like UMAP or PCA), would the decoder be able to decode de-noise images from it?". For results see 
- ["pca/umap as encoder results"](#pcaumap-as-encoder-results) 
+For each technique I embedded all the images in 16D or 2D.
+
+ <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/pca_umap_results.jpg"></p>
  
- 
-## Predict rat body angle
-A network which uses feature embeddings (AKA the latent representation) that were extracted from images
- by an encoder to predict what is the body angle of the rat in the image
- For extracting the images embeddings I used An encoder with the same architecture as the AE encoder.
+  The only technique that reach similar results as the AE encoder was the PCA dimensionality reduction to 16D. 
+ The 16 principal components of the PCA explained ~55% of the dataset variance. We can see that the 
+ only feature the network didn't learn to reconstruct correctly was the tail of the rat. The 2D UMAP 
+ latent space representation resembled the off the AE encoder latent space. The 
+ difference in this case is expressed in the 6 port representation around the arena which in this case are less visible.
+
+## How the objective of the learning affects the latent space neural Representation
+ A direction tagger network was trained to predict the body direction of the rat. 
+Its input is the single image of the rat and its output is the rat direction. 
+The whole architecture of the direction tagger is identical to the AE encoder 
+(except for the last linear readout). 
+Its objective function is a regression to body direction (with the L2 metric)
   
  The network architecture:
   <p align="center"><img width="600" height="230" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_network.jpg"></p>
 
-The input of the network is the same as for the AE network.
-This network was used in order to address the 3rd question "How the objective of the learning affects the latent space neural
-    representation?". For results see 
- ["predict rat boy angle results"](#predict-rat-boy-angle-results) 
-
-
-## Installation
-This implementation uses Python 3.7.4 and PyTorch.
-
-All dependencies can be installed into a conda environment with the provided environment.yml file.
-``` 
-# ==== clone repository =====
-git clone https://github.com/doronharitan/autoencoder.git
-cd autoencoder
-
-# ==== create conda env and activte it =====
-conda env create -f environment.yml
-conda activate autoencoder_env
-```
-
-##  Dataset requirement
-#### Train/Test dataset: 
-The dataset needs to be in npz/npy format. The dimensions of the array needs to be: dataset_size X image_width X image_height. 
-In case your images are not grey-scale, the dimension of the array need to be: dataset_size X num_channels X image_width X image_height.
-
-#### metadata file:
-As you would see in the [results paragraph below](#results), the metadata file would be use: 1. To color the data points according to specific condition. for 
-example the angle of the rat body (for more interesting details and results click here(add link)) 2. As the labels in the predicted body angle task 
-
-The format of this file need to be npy. The array dimensions should be:  dataset_size X conditions (could be as many as you want). 
-To control which condition you want the data points to be color according to change the 'color_datapoints_according_to_specific_condition_dict'
- dictionary which appear in the beginning of utils_local.py.     
-
-The metadata file needs to be saved in the same directory as the train/test data.
-
-
-##  Train and test modes
-*Default args parameters to train and test modes are detailed below
-
-### Train modes:  
-- #### Convolutional AutoEncoder Train mode
-```
-python Autoencoder/train.py   --train_data_dir       dir_where_the_data_for_the_training_is_saved\
-                              --file_name            name_of_train_data_file\
-```
-- #### PCA/UMAP as encoder Train mode
-```
-python Autoencoder/train_encoder_pca_umap.py   --train_data_dir       dir_where_trained_data_is_saved\
-                                               --file_name            name_of_train_data_file\
-                                               --meta_data_file_name  name_of_metadata_file\ 
-                                               --dim_reduction_algo   'UMAP' or 'PCA'
-```
-- #### Predict rat body angle Train mode
-```
-add all condtion and possabilites***
-```
-
-### Test mode:
-By default model checkpoints are saved in the 'model check points' directory using the following naming convention:
- model_<num_epoch>_epoch.pth.tar 
- 
-- #### Convolutional AutoEncoder Test mode Test mode
-Testing the ability of the model to de-noise an image on the designated test data.
-```
-python Autoencoder/test.py    --train_data_dir       dir_where_the_data_for_the_test_is_saved\
-                              --file_name            name_of_test_data_file\
-                              --meta_data_file_name  name_of_metadata_file\
-                              --checkpoint_to_load   name_of_checkpoint_to_load\
-                              --checkpoint_path      path_of_the_checkpoint_to_load
-```
-- #### PCA/UMAP as encoder Test mode 
-Testing the ability of the model to de-noise an image on the designated test data.
-
-```
-python Autoencoder/test_pca_umap_as_encoder.py  --train_data_dir       dir_where_the_data_for_the_test_is_saved\
-                                                --file_name            name_of_test_data_file\
-                                                --meta_data_file_name  name_of_metadata_file\
-                                                --checkpoint_to_load   name_of_checkpoint_to_load\
-                                                --checkpoint_path      path_of_the_checkpoint_to_load\
-                                                --dim_reduction_algo   'UMAP' or 'PCA'
-```
-
-- #### Predict rat body angle Test mode
-```
-add all condtion and possabilites***
-```
-
-#### Default args parameters to train and test modes
-```
---batch_size                        64 
---batch_size_latent_space           128         #batch size for the analysis of the latent space
---seed                              42
---epochs                            150
---split_size                        0.2         #set the size of the split between validation data and train data
---lr                                1e-3
---open_new_folder                   'True'      #open a new folder where all of the run data would be saved at 
---max_pixel_value                   255.0       #raw images max pixel value you want to scale the images according to
---latent_space_dim                  16          #The dim featuers you want to extract from the images
---save_model_checkpoints            True
---checkpoint_interval               5
---load_checkpoint                   False
---checkpoint_path                   ''          #The path of the checkpoint model we want to load
---checkpoint_to_load                ''          #The name of the model checkpoint we want to load
---save_latent_space                 True        #Should we save the latent space during the run? Would be use in the visualization script
---checkpoint_latent_space_interval  3           #Interval between saving latent_space checkpoints
---val_check_interval                5           #Interval between running validation test
-```
-
-## visualize change of latent space mode
-```
-python visualize_change_of_latent_space.py   --train_data_dir       dir_where_trained_data_is_saved\
-                                             --file_name            name_of_train_data_file\
-                                             --meta_data_file_name  name_of_metadata_file\                                           
-                                             --dim_reduction_algo   'UMAP' or 'PCA' or ''
-```
-
-#### Default args parameters to visualize change of latent space mode
-```
-# used in the visualize_change_of_latent_space.py
---extract_latent_space                                True      #In the dim reduction analysis should we extract the latent space? 
---extract_latent_space_fc2                            True      #In the dim reduction analysis should we analize also the FC_2 (begining of the decoder) feature space? 
---analysis_latent_space_stop_index                    'All',    #enable an early stop of latent_space analysis in a case we dont want to plot all of the latent space saved during the training
---save_plots_or_only_create_movie                     False     #in the dim reduction visualization do we want to save each plot or do we want to create only the video?
---umap_dim_reduction_fit_according_to_specific_epoch  'last'    #according to which epoch to fit the umap? Options: every_epoch, first, last, fit to alternative latent space, All
---alternative_latent_space_to_fit_dir                 ''        #What is the dir of the alternative latent space we want to fit the data to
-```
-
-
-## Results 
-The train model that was tested below was trained on 32K 50X50X1 gray-scale images of freely 
-behaving rats in an arena.The structure of the arena includes 6 ports where the rat can get food from.
- Thus, images could capture a rat in the middle space of the arena (the image would not include
-  a ports or walls of the area) and it could capture a rat in a port or in the edges of the arena
-   (the image would include a wall of the area).
-   
-- ##### Convolutional AutoEncoder test results:
-    A video showing a stack of sample images from the test dataset before the de-noise and after is seen below: 
-  <p align="center"><img width="400" height="200" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/input_vs_output_image.gif"></p>
-    From the comparision above we can learn that the Autoencoder was able to clean the noise from the images 
-
-    I was curious to learn **what is encoded in the AE latent space**? 
-or in other words, what are the features that the model learn to extract from the image, so only 
-based on them the decoder can reconstruct the image but without it's noise. 
-
-    To address this question, I used UMAP to reduce the dimensionality of my latent space (from 16D to 2D)
-and than I plotted the results (for a reminder how I did it and which script I used [click here](#visualize-change-of-latent-space)).
-To assess what specific elements from the image were learned and represented in the latent space I
- colored the data-points according to specific condition. The conditions I used are: 
- 1. The body angle of the rat 2. distance from the arena center.
- The results can be seen here:
-    <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="330" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
- 
- The above results were surprising, they show that the latent space that
-  was learned with training represented the dimensionality of the arena. 
-  In the plot above We can actually see an arena (circle) with 6 ports spaced evenly around it. 
-  This result is strengthened when we consider also the coloring of the data-points, which shows that 
-  the topological shape that was learned is arrange according to the distance of the rat from the 
-  center of the arena and by the body angle of the rat.  
-  When you consider the fact that input image could be from any location in the arena, its quiet amazing 
-  that the network learned to mapped it to the real arena shape and used this element as an important 
-  feature to encode the image data.
-  
-#### PCA/UMAP as encoder results
-In the autoencoder we extract the features embedding using learned convolotinal layers. Meaning
-the network learns to extract the features that are important for the task, in this case, the 
-feature that would enable the reconstructions of the image without it's noise. 
-What would happen if I would extracte the features embedding using dim reduction techniques,
- so the only learned part in our network would be the decoder? would the decoder be able to learn
-  how to decode the de-noise images from this features embedding?
-  
- To test the above I used PCA and UMAP to reduce the dim of the input images and than passed it
-  to a decoder with the same architecture as the AE one.
-   For each technique I extracted 16D (The latent space dim extracted by the AE encoder)
-    and 2D features embedding.
- 
- <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/pca_umap_results.jpg"></p>
-
- The only technique that reach similar results as the AE encoder was the PCA dim reduction to 16D. 
- The PCA feature embedding in this case explained ~55% of the dataset variance. We can see that the 
- only feature the network didn't learn to reconstruct correctly was the tail of the rat. The 2D UMAP 
- latent space representation also looked similar to the one we get from the ae encoder latent space. The 
- difference in this case  is express in the 6 port representation around the arena which in this case are less clear and 
- less structured.
- 
-
-#### predict rat boy angle results
-Another interesting question that rose during this study was "How the objective of the learning
- affects the latent space neural representation?". To question this I change the objective of the
-  AE encoder. So, The aim of the network would be to predict the body angle of the rat 
-  (for more details [click here](#predict-rat-body-angle)).
-  
-  After the network was train, I used UMAP to reduce the dimensionality of the latent space 
-  (from 16D to 2D) and than I plotted the results (for a reminder how I did it and which script I used [click here](#visualize-change-of-latent-space)).
+ After the direction tagger was trained, I used UMAP to reduce the dimensionality of the last hidden
+  layer which is analogous to the latent space of the AE.
  I colored the data-points according to the body angle of the rat.
   <p align="center"><img width="375" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/2D_umap_body_angle.png"> </p>
 
- The above results show that the latent space that
-  was learned with training represent the circularity of tha angle, Which when we think about it is not suppressing.
-  This results, indicates that the objective of the learning
- affects the latent space neural representation even if the
-  architecture of the network is the same. further research is needed in order to conform it. For more details see [future work](#future-work)
-  
- 
-## Future work
-This work only raised more questions about how the objective of the learning
- affects the latent space neural representation?  
- 
- Future work in the subject would include:
- 1. Transfer learning - train the network to predict the body angle of the rat while using pre-train
- AE encoder to extract the feature embeddings (we can even change the unfreeze layers and see how it effects the learning)
- . Would the feature extracted from the images using the AE encoder be enough to predict correctly the body angle of the rat?
- 2. Examine the space representation of the decoder first FC. is it similar to the latent space of the decoder? how it looks in the 
- PCA/UMAP as encoder network?
- 3. Examine what are the features each Transposed convectional layer is responsible for, How much redundancy do we have in the network?
+ The above results suggest that the  learned embedding represents the circularity of the rat body 
+ angle. The distance of the rat from the center of the arena, on the contrary,
+  has no clear representation in this embedding.
+[add figure]
+The geometry of the 2D AE embedding (fig A) is significantly different than the direction tagger
+ embedding (fig B). 
+This can be explained by the difference of the objective functions: 
+While the direction tagger was trained to predict only the body angle of the rat, 
+the AE was trained to reconstruct the whole image, and thus embedded all its major
+ features (rat body angle and distance from center, arena ports).
+  <p align="center"><img width="375" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_vs_AE.jpg"> </p>
