@@ -60,8 +60,8 @@ that the latent space embeds this feature in its representation.
 The features I colored  were: 
  1. The body angle of the rat (Fig A)
  2. The distance of the rat from the arena center (Fig B).
-      <p align="center"><img width="350" height="300" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
-    <img width="330" height="300" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
+      <p align="center"><img width="360" height="310" vspace="100" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/body_angle_of_the_rat.jpg"> 
+    <img width="340" height="310" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/dis_from_arena_center.jpg"></p>
 
   The 2D point cloud is shaped in a circular structure with 6 elements that comes out form the circle. This spatial
    arrangements correlates with the arena geometry. 
@@ -112,4 +112,4 @@ This can be explained by the difference of the objective functions:
 While the direction tagger was trained to predict only the body angle of the rat, 
 the AE was trained to reconstruct the whole image, and thus embedded all its major
  features (rat body angle and distance from center, arena ports).
-  <p align="center"><img width="375" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_vs_AE.jpg"> </p>
+  <p align="center"><img width="500" height="400" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/predict_body_angle_vs_AE.jpg"> </p>
