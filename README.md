@@ -38,7 +38,7 @@ of the arena and the features of the rat.](#the-last-latent-space-of-the-autoenc
 The objective function is L2 distance between the input and output images.
 
  The network architecture:
-  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/ae_network.jpg"></p>
+  <p align="center"><img src="https://github.com/doronharitan/autoencoder/blob/master/figuers/ae_network_1.jpg"></p>
 
 ###  Convolutional autoencoder denoises grayscale images.
 The following video shows a stack of sample images from the test dataset before and after the de-noising.
@@ -75,7 +75,7 @@ The changed architecture contains two parts:
 2.	Decoder – identical to the AE decoder.
 
  The network architecture:
-   <p align="center"><img width="650" height="240" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/PCA_UMAP_network.jpg"></p>
+   <p align="center"><img width="650" height="240" src="https://github.com/doronharitan/autoencoder/blob/master/figuers/Picture2-min.jpg"></p>
 
 For each technique I embedded all the images in 16D or 2D.
 
